@@ -1,0 +1,12 @@
+name: mars_monitoring_stats
+title: MARS Monitoring Stats
+username: nick.manna
+account: nick.manna
+server: pwdrstudio
+hostUrl: https://pwdrstudio:443/__api__
+appId: 160
+bundleId: 915
+url: https://pwdrstudio/content/160/
+when: 1617828807.10043
+asMultiple: FALSE
+asStatic: FALSE
