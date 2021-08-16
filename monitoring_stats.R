@@ -5,6 +5,7 @@
 #1.0 UI ---------
   m_statsUI <- function(id, label = "stats", current_fy, years){
     ns <- NS(id)
+    tabPanel(title = "Monitoring Stats", value = "m_stats",
     fluidPage(theme = shinytheme("cerulean"),
                titlePanel("Monitoring Stats"),
              #1.1 General Inputs ----
@@ -59,6 +60,7 @@
                     DTOutput(ns("cet_table"))
                  )
              
+    )
     )
   }
   

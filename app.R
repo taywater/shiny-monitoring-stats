@@ -44,6 +44,7 @@ jscode <- 'window.onbeforeunload = function() { return "Please use the button on
 #0.2 source scripts.  ----
 #each script contains a module, which includes UI and server code
 source("monitoring_stats.R")
+source("quarterly_report.R")
 
 
 #1: UI FUNCTION -----
@@ -69,11 +70,14 @@ ui <- function(req){
     tags$head(tags$script(jscode)),
     #must call useShinyjs() for shinyjs() functionality to work in app
     useShinyjs(),
-    #navbarPage("Fieldwork", theme = shinytheme("cerulean"), id = "inTabset",
-    #Stats
-    m_statsUI("stats", current_fy = current_fy, years = years)
+    navbarPage("Monitoring Stats", theme = shinytheme("cerulean"), id = "inTabset",
+      #Stats
+      m_statsUI("stats", current_fy = current_fy, years = years),
+      #Quarterly Report
+      q_reportUI("q_report", current_fy = current_fy, years = years)
+      
+    )
   )
-  # )
   
 }
 
@@ -90,6 +94,9 @@ server <- function(input, output, session) {
   # 2.2: Server Module functions ---------------------------
   #Stats
   stats <- m_statsServer("stats", parent_session = session, current_fy = current_fy, poolConn = poolConn)
+  
+  #Quarterly Report
+  q_report <- q_reportServer("q_report", parent_session = session, current_fy = current_fy, poolConn = poolConn)
   
 }
 
