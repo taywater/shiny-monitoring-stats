@@ -174,7 +174,7 @@
                                                  Count = pupc$sensors_deployed_value()))
         
         #systems with CWL monitoring this quarter
-        pupc$systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
+        pupc$systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
                                                        WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "'
                                              OR collection_dtime_est IS NULL)
@@ -185,7 +185,7 @@
 
         #systems with CWL monitoring to-date
         #No. of public systems monitored to date
-        pupc$systems_monitored_to_date_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
+        pupc$systems_monitored_to_date_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
                                                     WHERE d.public = TRUE and deployment_dtime_est <= '", rv$end_date(), "'"))
 
         pupc$systems_monitored_to_date_value <- reactive(dbGetQuery(poolConn, pupc$systems_monitored_to_date_q()))
@@ -211,7 +211,7 @@
         # )
         # -- Inner Join sensor locations to names if they exist in QAed CWL table, 
         # -- Where public based on the presence of '-' in the name.
-        # SELECT DISTINCT smp_to_system(r.smp_id) as system_id
+        # SELECT DISTINCT admin.smp_to_system(r.smp_id) as system_id
         # FROM cte_CWL_uid AS l
         # INNER JOIN cte_smp_id_ow AS r
         # ON l.ow_uid = r.ow_uid
@@ -417,7 +417,7 @@
         
         
         #systems with CWL monitoring this quarter
-        prpc$systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
+        prpc$systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
                                                        WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "'
                                              OR collection_dtime_est IS NULL)
@@ -428,7 +428,7 @@
         
         #systems with CWL monitoring to-date
         #No. of public systems monitored to date
-        prpc$systems_monitored_to_date_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
+        prpc$systems_monitored_to_date_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
                                                     WHERE d.public = FALSE and deployment_dtime_est <= '", rv$end_date(), "'"))
         
         prpc$systems_monitored_to_date_value <- reactive(dbGetQuery(poolConn, prpc$systems_monitored_to_date_q()))
