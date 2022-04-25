@@ -81,6 +81,7 @@
             pupc$sensors_deployed(), 
             pupc$systems_monitored(),
             pupc$systems_monitored_to_date(),
+            pupc$new_systems_monitored_qtr(),
             pupc$pre_inspection_qtr(), 
             pupc$pre_inspection_to_date(),
             pupc$cctv_dye_test_qtr(), 
@@ -220,6 +221,23 @@
         
         #systems with newly QA'd CWL Data given a post construction status this quarter
         #cannot track here
+        pupc$new_systems_monitored_qtr_q <- reactive(paste0("with newest_smps as (select distinct smp_id, system_id from ow_leveldata_entrydates 
+                                                      where fiscal_quarter_lookup_uid = (select max(fiscal_quarter_lookup_uid) from ow_leveldata_entrydates)),
+                                                      
+                                                      previous_date as (select max(fiscal_quarter_lookup_uid) as previous_date from ow_leveldata_entrydates 
+                                                      where fiscal_quarter_lookup_uid < (select max(fiscal_quarter_lookup_uid)from ow_leveldata_entrydates)),
+                                                      
+                                                      previous_smps as (select distinct smp_id, system_id from ow_leveldata_entrydates 
+                                                      where fiscal_quarter_lookup_uid = (select previous_date from previous_date))
+                                                      
+                                                      select COUNT(*) from newest_smps 
+                                                      where system_id not in (select system_id from previous_smps) -- System never given CWL before
+                                                      and smp_id like '%-%-%' -- Public SMPs only
+                                                      "))
+        
+        pupc$new_systems_monitored_qtr_value <- reactive(dbGetQuery(poolConn, pupc$new_systems_monitored_qtr_q()))
+        pupc$new_systems_monitored_qtr <- reactive(data.frame(Metric = "Systems Newly Monitored this Quarter",
+                                                              Count = pupc$new_systems_monitored_qtr_value()))
 
         #SRT pre-inspection tests this quarter
         pupc$pre_inspection_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
