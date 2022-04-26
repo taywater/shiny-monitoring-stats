@@ -221,21 +221,23 @@
         
         #systems with newly QA'd CWL Data given a post construction status this quarter
         #cannot track here
-        pupc$new_systems_monitored_qtr_q <- reactive(paste0("with newest_smps as (select distinct smp_id, system_id from ow_leveldata_entrydates 
-                                                      where fiscal_quarter_lookup_uid = (select max(fiscal_quarter_lookup_uid) from ow_leveldata_entrydates)),
-                                                      
-                                                      previous_date as (select max(fiscal_quarter_lookup_uid) as previous_date from ow_leveldata_entrydates 
-                                                      where fiscal_quarter_lookup_uid < (select max(fiscal_quarter_lookup_uid)from ow_leveldata_entrydates)),
-                                                      
-                                                      previous_smps as (select distinct smp_id, system_id from ow_leveldata_entrydates 
-                                                      where fiscal_quarter_lookup_uid = (select previous_date from previous_date))
-                                                      
-                                                      select COUNT(*) from newest_smps 
-                                                      where system_id not in (select system_id from previous_smps) -- System never given CWL before
-                                                      and smp_id like '%-%-%' -- Public SMPs only
-                                                      "))
+        pupc$new_systems_monitored_qtr_q <- reactive(paste0("with fq_input as (select fiscal_quarter_lookup_uid from public.fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
+                                                              str_sub(input$fy,-2),input$quarter,"') ,
+                                                              
+                                                              newest_smps as (select distinct smp_id, system_id from ow_leveldata_entrydates 
+                                                              where fiscal_quarter_lookup_uid = (select max(fiscal_quarter_lookup_uid) from fq_input)),
+                                                              
+                                                              previous_date as (select max(fiscal_quarter_lookup_uid) as previous_date from ow_leveldata_entrydates 
+                                                              where fiscal_quarter_lookup_uid < (select max(fiscal_quarter_lookup_uid)from fq_input)),
+                                                              
+                                                              previous_smps as (select distinct smp_id, system_id from ow_leveldata_entrydates 
+                                                              where fiscal_quarter_lookup_uid <= (select previous_date from previous_date))
+                                                              
+                                                              select COUNT(*) from newest_smps 
+                                                              where system_id not in (select system_id from previous_smps) -- System never given CWL before
+                                                              and smp_id like '%-%-%' -- Public SMPs only"))
         
-        pupc$new_systems_monitored_qtr_value <- reactive(dbGetQuery(poolConn, pupc$new_systems_monitored_qtr_q()))
+        pupc$new_systems_monitored_qtr_value <- reactive(if(input$fy >= 2022){if(input$quarter != "Q1")dbGetQuery(poolConn, pupc$new_systems_monitored_qtr_q()) else NA} else NA)
         pupc$new_systems_monitored_qtr <- reactive(data.frame(Metric = "Systems Newly Monitored this Quarter",
                                                               Count = pupc$new_systems_monitored_qtr_value()))
 
