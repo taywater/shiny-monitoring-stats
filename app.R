@@ -1,6 +1,6 @@
 #4/7/2021 Nick Manna, ARKF, Inc. 
 #This file, app.R, works with the sourced inlet_conveyance.R file to create the PWD GSI MARS Monitoring Stats app
-#See Fieldwork App R script for more details 
+#See Fieldwork App R script for more details.
 
 # SET UP
 #0.0: load libraries --------------
