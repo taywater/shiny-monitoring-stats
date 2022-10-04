@@ -31,7 +31,7 @@ options(DT.options = list(pageLength = 15))
 #set db connection
 #using a pool connection so separate connnections are unified
 #gets environmental variables saved in local or pwdrstudio environment
-poolConn <- dbPool(odbc(), dsn = "mars_testing", uid = Sys.getenv("shiny_uid"), pwd = Sys.getenv("shiny_pwd"))
+poolConn <- dbPool(odbc(), dsn = "mars14_data", uid = Sys.getenv("shiny_uid"), pwd = Sys.getenv("shiny_pwd"))
 
 #disconnect from db on stop 
 onStop(function(){
@@ -70,7 +70,7 @@ ui <- function(req){
     tags$head(tags$script(jscode)),
     #must call useShinyjs() for shinyjs() functionality to work in app
     useShinyjs(),
-    navbarPage("Monitoring Stats", theme = shinytheme("cerulean"), id = "inTabset",
+    navbarPage("Monitoring Stats", id = "inTabset", theme = shinytheme("cerulean"),
       #Stats
       m_statsUI("stats", current_fy = current_fy, years = years),
       #Quarterly Report

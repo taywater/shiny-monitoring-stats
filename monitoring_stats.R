@@ -225,13 +225,13 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
       
       #systems
       # No. of public systems monitored
-      # rv$public_systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d 
+      # rv$public_systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.fun_smp_to_system(d.smp_id)) FROM fieldwork.viw_deployment_full_cwl d 
       #                                               WHERE ((d.deployment_dtime_est >= '", rv$start_date(), "' AND d.deployment_dtime_est <= '", rv$end_date(), "')
       #                                               OR (d.collection_dtime_est <= '", rv$end_date(), "' AND d.collection_dtime_est >= '", rv$start_date(), "')
       #                                               OR (d.deployment_dtime_est <= '", rv$end_date(), "' AND d.collection_dtime_est is NULL))
       #                                               AND d.public = TRUE"))
       
-      rv$public_systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
+      rv$public_systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.fun_smp_to_system(d.smp_id)) FROM fieldwork.viw_deployment_full_cwl d
                                                        WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
                                              OR collection_dtime_est IS NULL) 
@@ -245,7 +245,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
       
       #No. of longterm systems monitored
       
-      rv$long_term_systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
+      rv$long_term_systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.fun_smp_to_system(d.smp_id)) FROM fieldwork.viw_deployment_full_cwl d
                                                        WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
                                              OR collection_dtime_est IS NULL) 
@@ -258,7 +258,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
       
       
       #No. of short term systems monitored
-      rv$short_term_systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
+      rv$short_term_systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.fun_smp_to_system(d.smp_id)) FROM fieldwork.viw_deployment_full_cwl d
                                                        WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
                                              OR collection_dtime_est IS NULL) 
@@ -269,8 +269,8 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
       rv$short_term_systems_monitored <- reactive(data.frame(Metric = as.character("Public Short Term Systems Monitored"), Count = rv$short_term_systems_monitored_value()))
       
       #No. of new systems monitored
-      rv$new_systems_monitored_q <- reactive(paste0("SELECT count(distinct smp_to_system(dada.smp_id)) FROM 
-                                                  (SELECT d.smp_id FROM fieldwork.deployment_full_cwl d 
+      rv$new_systems_monitored_q <- reactive(paste0("SELECT count(distinct admin.fun_smp_to_system(dada.smp_id)) FROM 
+                                                  (SELECT d.smp_id FROM fieldwork.viw_deployment_full_cwl d 
                                                     GROUP BY d.smp_id
                                                     HAVING min(d.deployment_dtime_est) >= '", rv$start_date(), "'
                                                     AND min(d.deployment_dtime_est) <= '", rv$end_date(), "') dada"))
@@ -279,7 +279,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
       rv$new_systems_monitored <- reactive(data.frame(Metric = as.character("New Systems Monitored"), Count = rv$new_systems_monitored_value()))
       
       #No. of public systems monitored to date
-      rv$public_systems_monitored_to_date_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d 
+      rv$public_systems_monitored_to_date_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.fun_smp_to_system(d.smp_id)) FROM fieldwork.viw_deployment_full_cwl d 
                                                     WHERE d.public = TRUE"))
       
       rv$public_systems_monitored_to_date_value <- reactive(dbGetQuery(poolConn, rv$public_systems_monitored_to_date_q()))
@@ -288,7 +288,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
       
       #private systems
       # No. of private systems monitored
-      rv$private_systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
+      rv$private_systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.fun_smp_to_system(d.smp_id)) FROM fieldwork.viw_deployment_full_cwl d
                                                        WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
                                              OR collection_dtime_est IS NULL) 
@@ -298,7 +298,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
       rv$private_systems_monitored <- reactive(data.frame(Metric = as.character("Private Systems Monitored"), Count = rv$private_systems_monitored_value()))
       
       #No. of private systems monitored to date
-      rv$private_systems_monitored_to_date_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d 
+      rv$private_systems_monitored_to_date_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.fun_smp_to_system(d.smp_id)) FROM fieldwork.viw_deployment_full_cwl d 
                                                     WHERE d.public = FALSE"))
       
       rv$private_systems_monitored_to_date_value <- reactive(dbGetQuery(poolConn, rv$private_systems_monitored_to_date_q()))
@@ -307,7 +307,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
       #smps -----
       
       # No. of public smps monitored
-      rv$public_smps_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT d.smp_id) FROM fieldwork.deployment_full_cwl d
+      rv$public_smps_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT d.smp_id) FROM fieldwork.viw_deployment_full_cwl d
                                                        WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
                                              OR collection_dtime_est IS NULL) 
@@ -318,7 +318,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
       
       #No. of new smps monitored
       rv$new_smps_monitored_q <- reactive(paste0("SELECT count(distinct(dada.smp_id)) FROM 
-                                                  (SELECT d.smp_id FROM fieldwork.deployment_full_cwl d 
+                                                  (SELECT d.smp_id FROM fieldwork.viw_deployment_full_cwl d 
                                                     GROUP BY d.smp_id, d.term 
                                                     HAVING min(d.deployment_dtime_est) >= '", rv$start_date(), "'
                                                     AND min(d.deployment_dtime_est) <= '", rv$end_date(), "') dada"))
@@ -328,7 +328,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
     # sensors -----------------------------------------------------------------
       
       #hobos deployed (public)
-      rv$hobos_deployed_q <- reactive(paste0("SELECT COUNT(distinct(sensor_serial)) FROM fieldwork.deployment_full_cwl 
+      rv$hobos_deployed_q <- reactive(paste0("SELECT COUNT(distinct(sensor_serial)) FROM fieldwork.viw_deployment_full_cwl 
                                              WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
                                              OR collection_dtime_est IS NULL) AND 
@@ -339,7 +339,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
                                                Count = rv$hobos_deployed_value()))
       
       #hobos deployed (private)
-      rv$hobos_deployed_private_q <- reactive(paste0("SELECT COUNT(distinct(sensor_serial)) FROM fieldwork.deployment_full_cwl 
+      rv$hobos_deployed_private_q <- reactive(paste0("SELECT COUNT(distinct(sensor_serial)) FROM fieldwork.viw_deployment_full_cwl 
                                              WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
                                              OR collection_dtime_est IS NULL) AND 
@@ -370,7 +370,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
       
       #SRTs (by selected date)
       #Pre-Inspection SRTs
-      rv$pre_inspection_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full 
+      rv$pre_inspection_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full 
                                              WHERE phase = '", input$phase, "' AND
                                              type = 'Pre-Inspection Dye Test'", rv$select_range_tests_query_text(), rv$public_query_text()))
       
@@ -380,7 +380,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
                                                Count = rv$pre_inspection_value()))
       
       #systems tested: Pre-Inspection SRT
-      rv$systems_tested_pre_inspection_srt_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.srt_full 
+      rv$systems_tested_pre_inspection_srt_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.viw_srt_full 
             WHERE phase = '", input$phase, "' AND
                     type = 'Pre-Inspection Dye Test'", rv$select_range_tests_query_text(), rv$public_query_text()))
       
@@ -390,7 +390,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
                                                    Count = rv$systems_tested_pre_inspection_srt_value()))
       
       #Performance SRTs
-      rv$performance_srts_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full 
+      rv$performance_srts_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full 
                                              WHERE phase = '", input$phase, "' AND
                                              type = 'Performance Test'", rv$select_range_tests_query_text(), rv$public_query_text()))
       
@@ -400,7 +400,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
                                                  Count = rv$performance_srts_value()))
       
       #systems tested: Performance SRT
-      rv$systems_tested_performance_srt_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.srt_full 
+      rv$systems_tested_performance_srt_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.viw_srt_full 
             WHERE phase = '", input$phase, "' AND
                     type = 'Performance Test'", rv$select_range_tests_query_text(), rv$public_query_text()))
       
@@ -410,7 +410,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
                                                                   Count = rv$systems_tested_performance_srt_value()))
       
       #CCTV/Dye Tests
-      rv$cctv_dye_test_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full 
+      rv$cctv_dye_test_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full 
                                              WHERE phase = '", input$phase, "' AND
                                              type = 'CCTV Dye Test'", rv$select_range_tests_query_text(), rv$public_query_text()))
       
@@ -420,7 +420,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
                                               Count = rv$cctv_dye_test_value()))
       
       #systems tested: CCTV/Dye Tests
-      rv$systems_tested_cctv_dye_test_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.srt_full 
+      rv$systems_tested_cctv_dye_test_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.viw_srt_full 
             WHERE phase = '", input$phase, "' AND
                     type = 'CCTV Dye Test'", rv$select_range_tests_query_text(), rv$public_query_text()))
       
@@ -430,7 +430,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
                                                              Count = rv$systems_tested_cctv_dye_test_value()))
       
       #systems tested: SRT
-      rv$systems_tested_srt_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.srt_full 
+      rv$systems_tested_srt_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.viw_srt_full 
             WHERE phase = '", input$phase, "'", rv$select_range_tests_query_text(), rv$public_query_text()))
       
       rv$systems_tested_srt_value <- reactive(dbGetQuery(poolConn, rv$systems_tested_srt_q()))
@@ -439,7 +439,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
                                                    Count = rv$systems_tested_srt_value()))
       
       #systems tested: porous pavement
-      rv$systems_tested_ppt_q <- reactive(paste0("SELECT COUNT(distinct smp_to_system(smp_id)) FROM fieldwork.porous_pavement_full 
+      rv$systems_tested_ppt_q <- reactive(paste0("SELECT COUNT(distinct admin.fun_smp_to_system(smp_id)) FROM fieldwork.viw_porous_pavement_full 
             WHERE phase = '", input$phase, "'", rv$select_range_tests_query_text(), rv$public_query_text()))
       
       rv$systems_tested_ppt_value <- reactive(dbGetQuery(poolConn, rv$systems_tested_ppt_q()))
@@ -448,7 +448,7 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
                                                    Count = rv$systems_tested_ppt_value()))
       
       #systems tested: CET
-      rv$systems_tested_cet_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.capture_efficiency_full 
+      rv$systems_tested_cet_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.viw_capture_efficiency_full 
             WHERE phase = '", input$phase, "'", rv$select_range_tests_query_text(), rv$public_query_text()))
       
       rv$systems_tested_cet_value <- reactive(dbGetQuery(poolConn, rv$systems_tested_cet_q()))
@@ -470,9 +470,9 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
       )
       
       rv$cet_unique_query_text <- reactive(if(input$unique_inlets == "Include All Tests"){ 
-        paste("fieldwork.capture_efficiency_full")
+        paste("fieldwork.viw_capture_efficiency_full")
       }else if(input$unique_inlets == "Most Recent for Each Inlet"){
-        paste("fieldwork.capture_efficiency_full_unique_inlets")
+        paste("fieldwork.viw_capture_efficiency_full_unique_inlets")
       })
       
       #capture efficiency tests (pc)
