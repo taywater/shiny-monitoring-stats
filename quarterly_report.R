@@ -132,6 +132,7 @@
             rv$prpc_table, 
             options = list(dom = 't')
           )
+          #browser()
           
         })
         
@@ -219,8 +220,7 @@
         # WHERE r.smp_id like '%-%'
         # ORDER BY system_id
         
-        #systems with newly QA'd CWL Data given a post construction status this quarter
-        #cannot track here
+        #systems with newly QA'd CWL Data this quarter
         pupc$new_systems_monitored_qtr_q <- reactive(paste0("with fq_input as (select fiscal_quarter_lookup_uid from public.fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
                                                               str_sub(input$fy,-2),input$quarter,"') ,
                                                               
@@ -237,7 +237,7 @@
                                                               where system_id not in (select system_id from previous_smps) -- System never given CWL before
                                                               and smp_id like '%-%-%' -- Public SMPs only"))
         
-        pupc$new_systems_monitored_qtr_value <- reactive(if(input$fy >= 2022){if(input$quarter != "Q1")dbGetQuery(poolConn, pupc$new_systems_monitored_qtr_q()) else NA} else NA)
+        pupc$new_systems_monitored_qtr_value <- reactive(dbGetQuery(poolConn, pupc$new_systems_monitored_qtr_q()))
         pupc$new_systems_monitored_qtr <- reactive(data.frame(Metric = "Systems Newly Monitored this Quarter",
                                                               Count = pupc$new_systems_monitored_qtr_value()))
 
@@ -303,18 +303,27 @@
                                                            Count = pupc$performance_srts_to_date_value()))
         
         #systems with capture efficiency testing administered this quarter
-        pupc$systems_tested_cet_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.capture_efficiency_full 
-            WHERE phase = '", pupc$phase, "'", rv$quarter_range(), pupc$public_query_text))
+        pupc$systems_tested_cet_q <- reactive(paste0("with old_systems as (select system_id, min(test_date) as earliest_test 
+            from fieldwork.capture_efficiency_full where phase = '", 
+            pupc$phase, "' AND test_date < '", 
+            rv$start_date(), "' ", pupc$public_query_text, 
+            " AND low_flow_bypass_observed IS NOT NULL group by system_id)
+  
+            SELECT count(distinct(system_id)) FROM fieldwork.capture_efficiency_full 
+            WHERE phase = '", pupc$phase, "'", rv$quarter_range(), 
+            pupc$public_query_text, " AND low_flow_bypass_observed IS NOT NULL 
+            and system_id not in (select system_id from old_systems)"))
+        
         
         pupc$systems_tested_cet_value <- reactive(dbGetQuery(poolConn, pupc$systems_tested_cet_q()))
         
-        pupc$systems_tested_cet <- reactive(data.frame(Metric = "Systems with Capture Efficiency Tests this Quarter", 
+        pupc$systems_tested_cet <- reactive(data.frame(Metric = "New Systems with Capture Efficiency Tests this Quarter", 
                                                      Count = pupc$systems_tested_cet_value()))
         
         
         #systems with capture efficiency testing administered to date
         pupc$systems_tested_cet_to_date_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.capture_efficiency_full 
-            WHERE phase = '", pupc$phase, "'", rv$to_date_range(), pupc$public_query_text))
+            WHERE phase = '", pupc$phase, "'", rv$to_date_range(), pupc$public_query_text, " AND low_flow_bypass_observed IS NOT NULL"))
         
         pupc$systems_tested_cet_to_date_value <- reactive(dbGetQuery(poolConn, pupc$systems_tested_cet_to_date_q()))
         
