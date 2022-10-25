@@ -80,8 +80,10 @@
           rv$pupc_table <- bind_rows(
             pupc$sensors_deployed(), 
             pupc$systems_monitored(),
+            pupc$systems_newly_monitored_qtr(),
             pupc$systems_monitored_to_date(),
-            pupc$new_systems_monitored_qtr(),
+            pupc$new_systems_QA_data_qtr(),
+            pupc$systems_QA_data_to_date(),
             pupc$pre_inspection_qtr(), 
             pupc$pre_inspection_to_date(),
             pupc$cctv_dye_test_qtr(), 
@@ -132,6 +134,7 @@
             rv$prpc_table, 
             options = list(dom = 't')
           )
+          
           
         })
         
@@ -184,6 +187,19 @@
         pupc$systems_monitored_value <- reactive(dbGetQuery(poolConn, pupc$systems_monitored_q()))
         pupc$systems_monitored <- reactive(data.frame(Metric = as.character("Systems Monitored this Quarter"), Count = pupc$systems_monitored_value()))
 
+        #Systems newly monitored this quarter
+        #Systems deployed at for the first time this quarter
+        pupc$systems_newly_monitored_qtr_q <- reactive(paste0("with last_quarter as (SELECT DISTINCT smp_to_system(d.smp_id) as system_id FROM fieldwork.deployment_full_cwl d
+          WHERE d.public = TRUE and deployment_dtime_est < '", rv$start_date(), "' and smp_to_system(d.smp_id) is not null)
+                
+          SELECT count(DISTINCT(smp_to_system(d.smp_id))) as system_id FROM fieldwork.deployment_full_cwl d
+            WHERE d.public = TRUE and deployment_dtime_est <= '", rv$end_date(), "' 
+            and smp_to_system(d.smp_id) is not null and smp_to_system(d.smp_id) not in (select * from last_quarter)"))
+        pupc$systems_newly_monitored_qtr_value <- reactive(dbGetQuery(poolConn, pupc$systems_monitored_q()))
+        pupc$systems_newly_monitored_qtr <- reactive(data.frame(Metric = as.character("Systems Newly Monitored this Quarter"), 
+                                                                Count = pupc$systems_newly_monitored_qtr_value()))
+
+        
         #systems with CWL monitoring to-date
         #No. of public systems monitored to date
         pupc$systems_monitored_to_date_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
@@ -194,34 +210,7 @@
                                                                    to_date_count = pupc$systems_monitored_to_date_value()))
 
         #systems with QA'd CWL Data to-date
-        #use a query like this. it slows down the app too much to include right now. 
-        #this is copied from will's version of the post-con spreadsheet, and it is faster than a simpler version 
-        
-        # -- GREEDY Query - with cte - optimized for speed. 
-        # -- RETURNS a list of Public systems with QAed Data in the MARS DB
-        # -- at the moment/instance it is run.
-        # WITH cte_smp_id_ow AS (
-        #   -- Full distinct list of sensor locations and names from fieldwork app
-        #   SELECT DISTINCT smp_id, ow_suffix, ow_uid
-        #   FROM fieldwork.ow_all
-        # ),
-        # cte_CWL_uid AS (
-        #   -- Full distinct list of sensor locations (ow_uid) in QAed CWL table  
-        #   SELECT DISTINCT ow_uid
-        #   FROM public.ow_leveldata_raw
-        # )
-        # -- Inner Join sensor locations to names if they exist in QAed CWL table, 
-        # -- Where public based on the presence of '-' in the name.
-        # SELECT DISTINCT smp_to_system(r.smp_id) as system_id
-        # FROM cte_CWL_uid AS l
-        # INNER JOIN cte_smp_id_ow AS r
-        # ON l.ow_uid = r.ow_uid
-        # WHERE r.smp_id like '%-%'
-        # ORDER BY system_id
-        
-        #systems with newly QA'd CWL Data given a post construction status this quarter
-        #cannot track here
-        pupc$new_systems_monitored_qtr_q <- reactive(paste0("with fq_input as (select fiscal_quarter_lookup_uid from public.fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
+        pupc$new_systems_QA_data_qtr_q <- reactive(paste0("with fq_input as (select fiscal_quarter_lookup_uid from public.fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
                                                               str_sub(input$fy,-2),input$quarter,"') ,
                                                               
                                                               newest_smps as (select distinct smp_id, system_id from ow_leveldata_entrydates 
@@ -237,10 +226,24 @@
                                                               where system_id not in (select system_id from previous_smps) -- System never given CWL before
                                                               and smp_id like '%-%-%' -- Public SMPs only"))
         
-        pupc$new_systems_monitored_qtr_value <- reactive(if(input$fy >= 2022){if(input$quarter != "Q1")dbGetQuery(poolConn, pupc$new_systems_monitored_qtr_q()) else NA} else NA)
-        pupc$new_systems_monitored_qtr <- reactive(data.frame(Metric = "Systems Newly Monitored this Quarter",
-                                                              Count = pupc$new_systems_monitored_qtr_value()))
+        pupc$new_systems_QA_data_qtr_value <- reactive(dbGetQuery(poolConn, pupc$new_systems_QA_data_qtr_q()))
+        pupc$new_systems_QA_data_qtr <- reactive(data.frame(Metric = "Systems With QA data for the First Time This Quarter",
+                                                              Count = pupc$new_systems_QA_data_qtr_value()))
 
+        pupc$systems_QA_data_to_date_q <- reactive(paste0("with fq_input as (select fiscal_quarter_lookup_uid from public.fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
+                                                          str_sub(input$fy,-2),input$quarter,"') ,
+                                                              
+                                                              current_smps as (select distinct smp_id, system_id from ow_leveldata_entrydates 
+                                                              where fiscal_quarter_lookup_uid <= (select max(fiscal_quarter_lookup_uid) from fq_input)),
+                                                              
+                                                              select COUNT(*) from current_smps 
+                                                              where smp_id like '%-%-%' -- Public SMPs only"))
+        
+        pupc$systems_QA_data_to_date_value <- reactive(dbGetQuery(poolConn, pupc$systems_QA_data_to_date_q()))
+        pupc$systems_QA_data_to_date <- reactive(data.frame(Metric = "Systems With QA data for the First Time This Quarter",
+                                                            Count = pupc$systems_QA_data_to_date_value()))
+        
+        
         #SRT pre-inspection tests this quarter
         pupc$pre_inspection_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
                                              WHERE phase = '", pupc$phase, "' AND
