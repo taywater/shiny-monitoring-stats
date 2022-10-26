@@ -119,6 +119,7 @@
           rv$prpc_table <- bind_rows(
             prpc$sensors_deployed(), 
             prpc$systems_monitored(),
+            prpc$systems_newly_monitored_qtr(),
             prpc$systems_monitored_to_date(),
             prpc$pre_inspection_qtr(), 
             prpc$pre_inspection_to_date(),
@@ -450,6 +451,7 @@
         
         prpc$sensors_deployed_value <- reactive(dbGetQuery(poolConn, prpc$sensors_deployed_q()))
         prpc$sensors_deployed <- reactive(data.frame(Metric = "Sensors Deployed", 
+                                                     Description = "Total HOBOs deployed this quarter",
                                                      Count = prpc$sensors_deployed_value()))
         
         
@@ -461,7 +463,22 @@
                                                        AND d.public = FALSE"))
         
         prpc$systems_monitored_value <- reactive(dbGetQuery(poolConn, prpc$systems_monitored_q()))
-        prpc$systems_monitored <- reactive(data.frame(Metric = as.character("Systems Monitored this Quarter"), Count = prpc$systems_monitored_value()))
+        prpc$systems_monitored <- reactive(data.frame(Metric = as.character("Systems Monitored this Quarter"), 
+                                                      Description = "Systems at which HOBOs were deployed this quarter",
+                                                      Count = prpc$systems_monitored_value()))
+        
+        #Systems newly monitored this quarter
+        #Systems deployed at for the first time this quarter
+        prpc$systems_newly_monitored_qtr_q <- reactive(paste0("with last_quarter as (SELECT DISTINCT smp_to_system(d.smp_id) as system_id FROM fieldwork.deployment_full_cwl d
+          WHERE d.public = FALSE and deployment_dtime_est < '", rv$start_date(), "' and smp_to_system(d.smp_id) is not null)
+                
+          SELECT count(DISTINCT(smp_to_system(d.smp_id))) FROM fieldwork.deployment_full_cwl d
+            WHERE d.public = FALSE and deployment_dtime_est <= '", rv$end_date(), "' 
+            and smp_to_system(d.smp_id) is not null and smp_to_system(d.smp_id) not in (select * from last_quarter)"))
+        prpc$systems_newly_monitored_qtr_value <- reactive(dbGetQuery(poolConn, prpc$systems_newly_monitored_qtr_q()))
+        prpc$systems_newly_monitored_qtr <- reactive(data.frame(Metric = as.character("Systems Newly Monitored this Quarter"), 
+                                                                Description = "Systems at which HOBOs were deployed for the first time this quarter",
+                                                                Count = prpc$systems_newly_monitored_qtr_value()))
         
         #systems with CWL monitoring to-date
         #No. of public systems monitored to date
@@ -470,6 +487,7 @@
         
         prpc$systems_monitored_to_date_value <- reactive(dbGetQuery(poolConn, prpc$systems_monitored_to_date_q()))
         prpc$systems_monitored_to_date <- reactive(data.frame(Metric = as.character("Systems Monitored to-Date"),
+                                                              Description = "All systems at which HOBOs have been deployed",
                                                               to_date_count = prpc$systems_monitored_to_date_value()))
         
         #SRT pre-inspection tests this quarter
