@@ -200,7 +200,7 @@
             and smp_to_system(d.smp_id) is not null and smp_to_system(d.smp_id) not in (select * from last_quarter)"))
         pupc$systems_newly_monitored_qtr_value <- reactive(dbGetQuery(poolConn, pupc$systems_newly_monitored_qtr_q()))
         pupc$systems_newly_monitored_qtr <- reactive(data.frame(Metric = as.character("Systems Newly Monitored this Quarter"), 
-                                                                Description = "Systems at which HOBOs were deployed for the first time",
+                                                                Description = "Systems at which HOBOs were deployed for the first time this quarter",
                                                                 Count = pupc$systems_newly_monitored_qtr_value()))
 
         
@@ -247,7 +247,7 @@
         
         pupc$systems_QA_data_to_date_value <- reactive(dbGetQuery(poolConn, pupc$systems_QA_data_to_date_q()))
         pupc$systems_QA_data_to_date <- reactive(data.frame(Metric = "Systems With QA data to-Date",
-                                                            Description = "All systems with QA data",
+                                                            Description = "All systems with QA data in the Postgres database",
                                                             Count = pupc$systems_QA_data_to_date_value()))
         
         
