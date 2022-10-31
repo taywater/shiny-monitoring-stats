@@ -98,7 +98,7 @@
           
           output$pupc_table <- renderDT(
             rv$pupc_table, 
-            options = list(dom = 't')
+            options = list(dom = 't', pageLength = 20)
           )
           
           #public construction table
@@ -136,6 +136,7 @@
             options = list(dom = 't')
           )
           
+          #browser() #Check the state of variables post-button click
           
         })
         
