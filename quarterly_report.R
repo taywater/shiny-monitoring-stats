@@ -6,7 +6,7 @@
   q_reportUI <- function(id, label = "q_report", current_fy, years){
     ns <- NS(id)
     tabPanel(title = "Quarterly Report", value = "q_report",
-    fluidPage(theme = shinytheme("cerulean"),
+    fluidPage(#theme = shinytheme("cerulean"),
               titlePanel("Quarterly Report Counts"), 
               #1.1 General Inputs
               sidebarPanel(
@@ -169,7 +169,7 @@
         
         #Sensors deployed this quarter
         #hobos deployed (public)
-        pupc$sensors_deployed_q <- reactive(paste0("SELECT COUNT(distinct(sensor_serial)) FROM fieldwork.deployment_full_cwl 
+        pupc$sensors_deployed_q <- reactive(paste0("SELECT COUNT(distinct(sensor_serial)) FROM fieldwork.viw_deployment_full_cwl 
                                              WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
                                              OR collection_dtime_est IS NULL) AND 
@@ -181,7 +181,7 @@
                                                  Count = pupc$sensors_deployed_value()))
         
         #systems with CWL monitoring this quarter
-        pupc$systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
+        pupc$systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.fun_smp_to_system(d.smp_id)) FROM fieldwork.viw_deployment_full_cwl d
                                                        WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "'
                                              OR collection_dtime_est IS NULL)
@@ -194,12 +194,12 @@
 
         #Systems newly monitored this quarter
         #Systems deployed at for the first time this quarter
-        pupc$systems_newly_monitored_qtr_q <- reactive(paste0("with last_quarter as (SELECT DISTINCT smp_to_system(d.smp_id) as system_id FROM fieldwork.deployment_full_cwl d
-          WHERE d.public = TRUE and deployment_dtime_est < '", rv$start_date(), "' and smp_to_system(d.smp_id) is not null)
+        pupc$systems_newly_monitored_qtr_q <- reactive(paste0("with last_quarter as (SELECT DISTINCT admin.fun_smp_to_system(d.smp_id) as system_id FROM fieldwork.viw_deployment_full_cwl d
+          WHERE d.public = TRUE and deployment_dtime_est < '", rv$start_date(), "' and admin.fun_smp_to_system(d.smp_id) is not null)
                 
-          SELECT count(DISTINCT(smp_to_system(d.smp_id))) FROM fieldwork.deployment_full_cwl d
+          SELECT count(DISTINCT(admin.fun_smp_to_system(d.smp_id))) FROM fieldwork.viw_deployment_full_cwl d
             WHERE d.public = TRUE and deployment_dtime_est <= '", rv$end_date(), "' 
-            and smp_to_system(d.smp_id) is not null and smp_to_system(d.smp_id) not in (select * from last_quarter)"))
+            and admin.fun_smp_to_system(d.smp_id) is not null and admin.fun_smp_to_system(d.smp_id) not in (select * from last_quarter)"))
         pupc$systems_newly_monitored_qtr_value <- reactive(dbGetQuery(poolConn, pupc$systems_newly_monitored_qtr_q()))
         pupc$systems_newly_monitored_qtr <- reactive(data.frame(Metric = as.character("Systems Newly Monitored this Quarter"), 
                                                                 Description = "Systems at which HOBOs were deployed for the first time this quarter",
@@ -208,7 +208,7 @@
         
         #systems with CWL monitoring to-date
         #No. of public systems monitored to date
-        pupc$systems_monitored_to_date_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
+        pupc$systems_monitored_to_date_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.fun_smp_to_system(d.smp_id)) FROM fieldwork.viw_deployment_full_cwl d
                                                     WHERE d.public = TRUE and deployment_dtime_est <= '", rv$end_date(), "'"))
 
         pupc$systems_monitored_to_date_value <- reactive(dbGetQuery(poolConn, pupc$systems_monitored_to_date_q()))
@@ -217,16 +217,16 @@
                                                                    Count = pupc$systems_monitored_to_date_value()))
 
         #systems with QA'd CWL Data to-date
-        pupc$new_systems_QA_data_qtr_q <- reactive(paste0("with fq_input as (select fiscal_quarter_lookup_uid from public.fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
+        pupc$new_systems_QA_data_qtr_q <- reactive(paste0("with fq_input as (select fiscal_quarter_lookup_uid from admin.tbl_fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
                                                               str_sub(input$fy,-2),input$quarter,"') ,
                                                               
-                                                              newest_smps as (select distinct system_id from ow_leveldata_entrydates 
+                                                              newest_smps as (select distinct system_id from data.tbl_ow_leveldata_entrydates 
                                                               where fiscal_quarter_lookup_uid = (select max(fiscal_quarter_lookup_uid) from fq_input)),
                                                               
-                                                              previous_date as (select max(fiscal_quarter_lookup_uid) as previous_date from ow_leveldata_entrydates 
+                                                              previous_date as (select max(fiscal_quarter_lookup_uid) as previous_date from data.tbl_ow_leveldata_entrydates 
                                                               where fiscal_quarter_lookup_uid < (select max(fiscal_quarter_lookup_uid)from fq_input)),
                                                               
-                                                              previous_smps as (select distinct system_id from ow_leveldata_entrydates 
+                                                              previous_smps as (select distinct system_id from data.tbl_ow_leveldata_entrydates 
                                                               where fiscal_quarter_lookup_uid <= (select previous_date from previous_date))
                                                               
                                                               select COUNT(*) from newest_smps 
@@ -238,10 +238,10 @@
                                                             Description = "Systems that have QA data for the first time this quarter",
                                                               Count = pupc$new_systems_QA_data_qtr_value()))
 
-        pupc$systems_QA_data_to_date_q <- reactive(paste0("with fq_input as (select fiscal_quarter_lookup_uid from public.fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
+        pupc$systems_QA_data_to_date_q <- reactive(paste0("with fq_input as (select fiscal_quarter_lookup_uid from admin.tbl_fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
                                                           str_sub(input$fy,-2),input$quarter,"') ,
                                                               
-                                                              current_systems as (select distinct system_id from ow_leveldata_entrydates 
+                                                              current_systems as (select distinct system_id from data.tbl_ow_leveldata_entrydates 
                                                               where fiscal_quarter_lookup_uid <= (select max(fiscal_quarter_lookup_uid) from fq_input))
                                                               
                                                               select COUNT(*) from current_systems 
@@ -254,7 +254,7 @@
         
         
         #SRT pre-inspection tests this quarter
-        pupc$pre_inspection_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        pupc$pre_inspection_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", pupc$phase, "' AND
                                              type = 'Pre-Inspection Dye Test'", rv$quarter_range(), pupc$public_query_text))
 
@@ -264,7 +264,7 @@
                                                  Count = pupc$pre_inspection_qtr_value()))
         
         #SRT pre-inspection tests to-date
-        pupc$pre_inspection_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        pupc$pre_inspection_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", pupc$phase, "' AND
                                              type = 'Pre-Inspection Dye Test'", rv$to_date_range(), pupc$public_query_text))
         
@@ -275,7 +275,7 @@
         
         
         #SRT CCTV/ Dye Tests this quarter
-        pupc$cctv_dye_test_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        pupc$cctv_dye_test_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", pupc$phase, "' AND
                                              type = 'CCTV Dye Test'", rv$quarter_range(), pupc$public_query_text))
         
@@ -285,7 +285,7 @@
                                                        Count = pupc$cctv_dye_test_qtr_value()))
         
         #SRT CCTV/ Dye Tests this to-date
-        pupc$cctv_dye_test_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        pupc$cctv_dye_test_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", pupc$phase, "' AND
                                              type = 'CCTV Dye Test'", rv$to_date_range(), pupc$public_query_text))
         
@@ -295,7 +295,7 @@
                                                            Count = pupc$cctv_dye_test_to_date_value()))
         
         #SRT Performance Tests this quarter
-        pupc$performance_srts_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        pupc$performance_srts_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", pupc$phase, "' AND
                                              type = 'Performance Test'", rv$quarter_range(), pupc$public_query_text))
         
@@ -305,7 +305,7 @@
                                                        Count = pupc$performance_srts_qtr_value()))
         
         #SRT Performance Tests to-date
-        pupc$performance_srts_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        pupc$performance_srts_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", pupc$phase, "' AND
                                              type = 'Performance Test'", rv$to_date_range(), pupc$public_query_text))
         
@@ -316,12 +316,12 @@
         
         #systems with capture efficiency testing administered this quarter
         pupc$systems_tested_cet_q <- reactive(paste0("with old_systems as (select system_id, min(test_date) as earliest_test 
-            from fieldwork.capture_efficiency_full where phase = '", 
+            from fieldwork.viw_capture_efficiency_full where phase = '", 
                                                      pupc$phase, "' AND test_date < '", 
                                                      rv$start_date(), "' ", pupc$public_query_text, 
                                                      " AND low_flow_bypass_observed IS NOT NULL group by system_id)
   
-            SELECT count(distinct(system_id)) FROM fieldwork.capture_efficiency_full 
+            SELECT count(distinct(system_id)) FROM fieldwork.viw_capture_efficiency_full 
             WHERE phase = '", pupc$phase, "'", rv$quarter_range(), 
                                                      pupc$public_query_text, " AND low_flow_bypass_observed IS NOT NULL 
             and system_id not in (select system_id from old_systems)"))        
@@ -332,7 +332,7 @@
         
         
         #systems with capture efficiency testing administered to date
-        pupc$systems_tested_cet_to_date_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.capture_efficiency_full 
+        pupc$systems_tested_cet_to_date_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.viw_capture_efficiency_full 
             WHERE phase = '", pupc$phase, "'", rv$to_date_range(), pupc$public_query_text, " AND low_flow_bypass_observed IS NOT NULL"))
         
         pupc$systems_tested_cet_to_date_value <- reactive(dbGetQuery(poolConn, pupc$systems_tested_cet_to_date_q()))
@@ -342,7 +342,7 @@
         
 
         #infiltration system-tests this quarter (subtracting ten because of some tests that took part on multiple)
-        pupc$infiltration_system_tests_qtr_q <- reactive(paste0("SELECT count(*) FROM fieldwork.porous_pavement_smp_averages
+        pupc$infiltration_system_tests_qtr_q <- reactive(paste0("SELECT count(*) FROM fieldwork.viw_porous_pavement_smp_averages
                                                           WHERE test_date >= '", rv$start_date(), "' AND
                                                                test_date <= '", rv$end_date(), "'"))
 
@@ -352,7 +352,7 @@
                                                        Count = pupc$infiltration_system_tests_qtr_value()))
         
         #infiltration system-tests to-date
-        pupc$infiltration_system_tests_to_date_q <- reactive(paste0("SELECT (count(*) - 10) as count FROM fieldwork.porous_pavement_smp_averages
+        pupc$infiltration_system_tests_to_date_q <- reactive(paste0("SELECT (count(*) - 10) as count FROM fieldwork.viw_porous_pavement_smp_averages
                                                           WHERE test_date <= '", rv$end_date(), "'"))
         
         pupc$infiltration_system_tests_to_date_value <- reactive(dbGetQuery(poolConn, pupc$infiltration_system_tests_to_date_q()))
@@ -370,7 +370,7 @@
         puc$phase <- "Construction"
         
         #SRT pre-inspection tests this quarter
-        puc$pre_inspection_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        puc$pre_inspection_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", puc$phase, "' AND
                                              type = 'Pre-Inspection Dye Test'", rv$quarter_range(), puc$public_query_text))
         
@@ -380,7 +380,7 @@
                                                       Count = puc$pre_inspection_qtr_value()))
         
         #SRT pre-inspection tests to-date
-        puc$pre_inspection_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        puc$pre_inspection_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", puc$phase, "' AND
                                              type = 'Pre-Inspection Dye Test'", rv$to_date_range(), puc$public_query_text))
         
@@ -391,7 +391,7 @@
         
         
         #SRT CCTV/ Dye Tests this quarter
-        puc$cctv_dye_test_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        puc$cctv_dye_test_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", puc$phase, "' AND
                                              type = 'CCTV Dye Test'", rv$quarter_range(), puc$public_query_text))
         
@@ -401,7 +401,7 @@
                                                      Count = puc$cctv_dye_test_qtr_value()))
         
         #SRT CCTV/ Dye Tests this to-date
-        puc$cctv_dye_test_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        puc$cctv_dye_test_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", puc$phase, "' AND
                                              type = 'CCTV Dye Test'", rv$to_date_range(), puc$public_query_text))
         
@@ -411,7 +411,7 @@
                                                          Count = puc$cctv_dye_test_to_date_value()))
         
         #SRT Performance Tests this quarter
-        puc$performance_srts_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        puc$performance_srts_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", puc$phase, "' AND
                                              type = 'Performance Test'", rv$quarter_range(), puc$public_query_text))
         
@@ -421,7 +421,7 @@
                                                         Count = puc$performance_srts_qtr_value()))
         
         #SRT Performance Tests to-date
-        puc$performance_srts_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        puc$performance_srts_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", puc$phase, "' AND
                                              type = 'Performance Test'", rv$to_date_range(), puc$public_query_text))
         
@@ -444,7 +444,7 @@
         
         #Sensors deployed this quarter
         #hobos deployed (public)
-        prpc$sensors_deployed_q <- reactive(paste0("SELECT COUNT(distinct(sensor_serial)) FROM fieldwork.deployment_full_cwl 
+        prpc$sensors_deployed_q <- reactive(paste0("SELECT COUNT(distinct(sensor_serial)) FROM fieldwork.viw_deployment_full_cwl 
                                              WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
                                              OR collection_dtime_est IS NULL) AND 
@@ -457,7 +457,7 @@
         
         
         #systems with CWL monitoring this quarter
-        prpc$systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
+        prpc$systems_monitored_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.fun_smp_to_system(d.smp_id)) FROM fieldwork.viw_deployment_full_cwl d
                                                        WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "'
                                              OR collection_dtime_est IS NULL)
@@ -470,12 +470,12 @@
         
         #Systems newly monitored this quarter
         #Systems deployed at for the first time this quarter
-        prpc$systems_newly_monitored_qtr_q <- reactive(paste0("with last_quarter as (SELECT DISTINCT smp_to_system(d.smp_id) as system_id FROM fieldwork.deployment_full_cwl d
-          WHERE d.public = FALSE and deployment_dtime_est < '", rv$start_date(), "' and smp_to_system(d.smp_id) is not null)
+        prpc$systems_newly_monitored_qtr_q <- reactive(paste0("with last_quarter as (SELECT DISTINCT admin.fun_smp_to_system(d.smp_id) as system_id FROM fieldwork.viw_deployment_full_cwl d
+          WHERE d.public = FALSE and deployment_dtime_est < '", rv$start_date(), "' and admin.fun_smp_to_system(d.smp_id) is not null)
                 
-          SELECT count(DISTINCT(smp_to_system(d.smp_id))) FROM fieldwork.deployment_full_cwl d
+          SELECT count(DISTINCT(admin.fun_smp_to_system(d.smp_id))) FROM fieldwork.viw_deployment_full_cwl d
             WHERE d.public = FALSE and deployment_dtime_est <= '", rv$end_date(), "' 
-            and smp_to_system(d.smp_id) is not null and smp_to_system(d.smp_id) not in (select * from last_quarter)"))
+            and admin.fun_smp_to_system(d.smp_id) is not null and admin.fun_smp_to_system(d.smp_id) not in (select * from last_quarter)"))
         prpc$systems_newly_monitored_qtr_value <- reactive(dbGetQuery(poolConn, prpc$systems_newly_monitored_qtr_q()))
         prpc$systems_newly_monitored_qtr <- reactive(data.frame(Metric = as.character("Systems Newly Monitored this Quarter"), 
                                                                 Description = "Systems at which HOBOs were deployed for the first time this quarter",
@@ -483,7 +483,7 @@
         
         #systems with CWL monitoring to-date
         #No. of public systems monitored to date
-        prpc$systems_monitored_to_date_q <- reactive(paste0("SELECT COUNT(DISTINCT smp_to_system(d.smp_id)) FROM fieldwork.deployment_full_cwl d
+        prpc$systems_monitored_to_date_q <- reactive(paste0("SELECT COUNT(DISTINCT admin.fun_smp_to_system(d.smp_id)) FROM fieldwork.viw_deployment_full_cwl d
                                                     WHERE d.public = FALSE and deployment_dtime_est <= '", rv$end_date(), "'"))
         
         prpc$systems_monitored_to_date_value <- reactive(dbGetQuery(poolConn, prpc$systems_monitored_to_date_q()))
@@ -492,7 +492,7 @@
                                                               to_date_count = prpc$systems_monitored_to_date_value()))
         
         #SRT pre-inspection tests this quarter
-        prpc$pre_inspection_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        prpc$pre_inspection_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", prpc$phase, "' AND
                                              type = 'Pre-Inspection Dye Test'", rv$quarter_range(), prpc$public_query_text))
         
@@ -502,7 +502,7 @@
                                                        Count = prpc$pre_inspection_qtr_value()))
         
         #SRT pre-inspection tests to-date
-        prpc$pre_inspection_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        prpc$pre_inspection_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", prpc$phase, "' AND
                                              type = 'Pre-Inspection Dye Test'", rv$to_date_range(), prpc$public_query_text))
         
@@ -513,7 +513,7 @@
         
         
         #SRT CCTV/ Dye Tests this quarter
-        prpc$cctv_dye_test_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        prpc$cctv_dye_test_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", prpc$phase, "' AND
                                              type = 'CCTV Dye Test'", rv$quarter_range(), prpc$public_query_text))
         
@@ -523,7 +523,7 @@
                                                       Count = prpc$cctv_dye_test_qtr_value()))
         
         #SRT CCTV/ Dye Tests this to-date
-        prpc$cctv_dye_test_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        prpc$cctv_dye_test_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", prpc$phase, "' AND
                                              type = 'CCTV Dye Test'", rv$to_date_range(), prpc$public_query_text))
         
@@ -533,7 +533,7 @@
                                                           Count = prpc$cctv_dye_test_to_date_value()))
         
         #SRT Performance Tests this quarter
-        prpc$performance_srts_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        prpc$performance_srts_qtr_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", prpc$phase, "' AND
                                              type = 'Performance Test'", rv$quarter_range(), prpc$public_query_text))
         
@@ -543,7 +543,7 @@
                                                          Count = prpc$performance_srts_qtr_value()))
         
         #SRT Performance Tests to-date
-        prpc$performance_srts_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.srt_full
+        prpc$performance_srts_to_date_q <- reactive(paste0("SELECT COUNT(*) FROM fieldwork.viw_srt_full
                                              WHERE phase = '", prpc$phase, "' AND
                                              type = 'Performance Test'", rv$to_date_range(), prpc$public_query_text))
         
@@ -553,7 +553,7 @@
                                                              Count = prpc$performance_srts_to_date_value()))
         
         #systems with capture efficiency testing administered this quarter
-        prpc$systems_tested_cet_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.capture_efficiency_full 
+        prpc$systems_tested_cet_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.viw_capture_efficiency_full 
             WHERE phase = '", prpc$phase, "'", rv$quarter_range(), prpc$public_query_text))
         
         prpc$systems_tested_cet_value <- reactive(dbGetQuery(poolConn, prpc$systems_tested_cet_q()))
@@ -563,7 +563,7 @@
         
         
         #systems with capture efficiency testing administered to date
-        prpc$systems_tested_cet_to_date_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.capture_efficiency_full 
+        prpc$systems_tested_cet_to_date_q <- reactive(paste0("SELECT COUNT(distinct system_id) FROM fieldwork.viw_capture_efficiency_full 
             WHERE phase = '", prpc$phase, "'", rv$to_date_range(), prpc$public_query_text))
         
         prpc$systems_tested_cet_to_date_value <- reactive(dbGetQuery(poolConn, prpc$systems_tested_cet_to_date_q()))
