@@ -31,7 +31,7 @@ outputs[["New Quarter"]] <- list()
 
 #Public sensors deployed
 for(i in 1:2){
-  query <- paste0("SELECT distinct sensor_serial FROM fieldwork.deployment_full_cwl 
+  query <- paste0("SELECT distinct sensor_serial FROM fieldwork.viw_deployment_full_cwl 
    WHERE deployment_dtime_est <= '", inputs$end_date[i], "'
    AND (collection_dtime_est >= '", inputs$start_date[i], "' 
    OR collection_dtime_est IS NULL) AND 
@@ -43,7 +43,7 @@ for(i in 1:2){
 
 #systems with CWL monitoring this quarter
 for(i in 1:2){
-  query <- paste0("SELECT DISTINCT smp_to_system(d.smp_id) FROM fieldwork.deployment_full_cwl d
+  query <- paste0("SELECT DISTINCT admin.fun_smp_to_system(d.smp_id) FROM fieldwork.viw_deployment_full_cwl d
    WHERE deployment_dtime_est <= '", inputs$end_date[i], "'
    AND (collection_dtime_est >= '", inputs$start_date[i], "'
    OR collection_dtime_est IS NULL)
@@ -54,24 +54,24 @@ for(i in 1:2){
 
 #No. of public systems monitored To-Date
 for(i in 1:2){
-  query <- paste0("SELECT DISTINCT smp_to_system(d.smp_id) as system_id FROM fieldwork.deployment_full_cwl d
-    WHERE d.public = TRUE and deployment_dtime_est <= '", inputs$end_date[i], "' and smp_to_system(d.smp_id) is not null")
+  query <- paste0("SELECT DISTINCT admin.fun_smp_to_system(d.smp_id) as system_id FROM fieldwork.viw_deployment_full_cwl d
+    WHERE d.public = TRUE and deployment_dtime_est <= '", inputs$end_date[i], "' and admin.fun_smp_to_system(d.smp_id) is not null")
   results <- dbGetQuery(mars, query)
   outputs[[i]][["To-Date: PuPC CWL Systems"]] <- results
 }
 
 #Systems newly with cwl data this quarter
 for(i in 1:2){
-  query <- paste0("with fq_input as (select fiscal_quarter_lookup_uid from public.fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
+  query <- paste0("with fq_input as (select fiscal_quarter_lookup_uid from admin.tbl_fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
    str_sub(inputs$fy[i],-2),inputs$quarter[i],"') ,
    
-   newest_smps as (select distinct smp_id, system_id from ow_leveldata_entrydates 
+   newest_smps as (select distinct smp_id, system_id from data.tbl_ow_leveldata_entrydates 
    where fiscal_quarter_lookup_uid = (select max(fiscal_quarter_lookup_uid) from fq_input)),
    
-   previous_date as (select max(fiscal_quarter_lookup_uid) as previous_date from ow_leveldata_entrydates 
+   previous_date as (select max(fiscal_quarter_lookup_uid) as previous_date from data.tbl_ow_leveldata_entrydates 
    where fiscal_quarter_lookup_uid < (select max(fiscal_quarter_lookup_uid)from fq_input)),
    
-   previous_smps as (select distinct smp_id, system_id from ow_leveldata_entrydates 
+   previous_smps as (select distinct smp_id, system_id from data.tbl_ow_leveldata_entrydates 
    where fiscal_quarter_lookup_uid <= (select previous_date from previous_date))
    
    select * from newest_smps 
@@ -88,7 +88,7 @@ inputs$to_date_range <- c(paste0(" AND test_date <= '", inputs$end_date[1], "'")
                           paste0(" AND test_date <= '", inputs$end_date[2], "'"))
 #Pre inspections
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'Pre-Inspection Dye Test'", inputs$quarter_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -98,7 +98,7 @@ for(i in 1:2){
 
 
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'Pre-Inspection Dye Test'", inputs$to_date_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -109,7 +109,7 @@ for(i in 1:2){
 
 #Dye tests
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'CCTV Dye Test'", inputs$quarter_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -119,7 +119,7 @@ for(i in 1:2){
 
 
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'CCTV Dye Test'", inputs$to_date_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -129,7 +129,7 @@ for(i in 1:2){
 
 #Performance tests
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'Performance Test'", inputs$quarter_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -137,7 +137,7 @@ for(i in 1:2){
 }
 
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'Performance Test'", inputs$to_date_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -148,11 +148,11 @@ for(i in 1:2){
 #CET
 for(i in 1:2){
   query <- paste0("with old_systems as (select system_id, min(test_date) as earliest_test 
-    from fieldwork.capture_efficiency_full where phase = '", inputs$phase, "' AND test_date < '", 
+    from fieldwork.viw_capture_efficiency_full where phase = '", inputs$phase, "' AND test_date < '", 
     inputs$start_date[i], "' ", inputs$public_query_text, " AND low_flow_bypass_observed IS NOT NULL
     group by system_id)
   
-  SELECT distinct system_id FROM fieldwork.capture_efficiency_full 
+  SELECT distinct system_id FROM fieldwork.viw_capture_efficiency_full 
    WHERE phase = '", inputs$phase, "'", inputs$quarter_range[i], inputs$public_query_text, 
                   " AND low_flow_bypass_observed IS NOT NULL and system_id not in (select system_id from old_systems)")
   results <- dbGetQuery(mars, query)
@@ -162,7 +162,7 @@ for(i in 1:2){
 
 
 for(i in 1:2){
-  query <- paste0("SELECT distinct system_id FROM fieldwork.capture_efficiency_full 
+  query <- paste0("SELECT distinct system_id FROM fieldwork.viw_capture_efficiency_full 
    WHERE phase = '", inputs$phase, "'", inputs$to_date_range[i], inputs$public_query_text,
                   " AND low_flow_bypass_observed IS NOT NULL")
   results <- dbGetQuery(mars, query)
@@ -173,7 +173,7 @@ for(i in 1:2){
 
 #PPSIRT
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.porous_pavement_smp_averages
+  query <- paste0("SELECT * FROM fieldwork.viw_porous_pavement_smp_averages
    WHERE test_date >= '", inputs$start_date[i], "' AND
    test_date <= '", inputs$end_date[i], "'")
   results <- dbGetQuery(mars, query)
@@ -183,7 +183,7 @@ for(i in 1:2){
 
 
 for(i in 1:2){
-  query <- paste0("SELECT COUNT(*) - 10 as count FROM fieldwork.porous_pavement_smp_averages
+  query <- paste0("SELECT COUNT(*) - 10 as count FROM fieldwork.viw_porous_pavement_smp_averages
     WHERE test_date <= '", inputs$end_date[i], "'")
   results <- dbGetQuery(mars, query)
   outputs[[i]][["To-Date: Porous Pavement"]] <- results
@@ -195,7 +195,7 @@ inputs$phase <- "Construction"
 
 #Pre inspections
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'Pre-Inspection Dye Test'", inputs$quarter_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -203,7 +203,7 @@ for(i in 1:2){
 }
 
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'Pre-Inspection Dye Test'", inputs$to_date_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -212,14 +212,14 @@ for(i in 1:2){
 
 #Dye tests
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'CCTV Dye Test'", inputs$quarter_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
   outputs[[i]][["Quarter: PuMC Dye Tests"]] <- results
 }
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'CCTV Dye Test'", inputs$to_date_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -228,7 +228,7 @@ for(i in 1:2){
 
 #Performance tests
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'Performance Test'", inputs$quarter_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -236,7 +236,7 @@ for(i in 1:2){
 }
 
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'Performance Test'", inputs$to_date_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -249,7 +249,7 @@ inputs$public_query_text = " AND public = FALSE"
 
 #Private sensors deployed
 for(i in 1:2){
-  query <- paste0("SELECT distinct(sensor_serial) FROM fieldwork.deployment_full_cwl 
+  query <- paste0("SELECT distinct(sensor_serial) FROM fieldwork.viw_deployment_full_cwl 
    WHERE deployment_dtime_est <= '", inputs$end_date[i], "'
    AND (collection_dtime_est >= '", inputs$start_date[i], "' 
    OR collection_dtime_est IS NULL) AND 
@@ -261,7 +261,7 @@ for(i in 1:2){
 
 #systems with CWL monitoring this quarter
 for(i in 1:2){
-  query <- paste0("SELECT DISTINCT smp_to_system(d.smp_id) FROM fieldwork.deployment_full_cwl d
+  query <- paste0("SELECT DISTINCT admin.fun_smp_to_system(d.smp_id) FROM fieldwork.viw_deployment_full_cwl d
    WHERE deployment_dtime_est <= '", inputs$end_date[i], "'
    AND (collection_dtime_est >= '", inputs$start_date[i], "'
    OR collection_dtime_est IS NULL)
@@ -272,7 +272,7 @@ for(i in 1:2){
 
 #No. of private systems monitored To-Date
 for(i in 1:2){
-  query <- paste0("SELECT DISTINCT smp_to_system(d.smp_id) FROM fieldwork.deployment_full_cwl d
+  query <- paste0("SELECT DISTINCT admin.fun_smp_to_system(d.smp_id) FROM fieldwork.viw_deployment_full_cwl d
     WHERE d.public = FALSE and deployment_dtime_est <= '", inputs$end_date[i], "'")
   results <- dbGetQuery(mars, query)
   outputs[[i]][["To-Date: VtPC CWL Systems"]] <- results
@@ -281,7 +281,7 @@ for(i in 1:2){
 #Private Tests
 #Pre inspections
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'Pre-Inspection Dye Test'", inputs$quarter_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -291,7 +291,7 @@ for(i in 1:2){
 
 
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'Pre-Inspection Dye Test'", inputs$to_date_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -302,7 +302,7 @@ for(i in 1:2){
 
 #Dye tests
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'CCTV Dye Test'", inputs$quarter_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -312,7 +312,7 @@ for(i in 1:2){
 
 
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'CCTV Dye Test'", inputs$to_date_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -322,7 +322,7 @@ for(i in 1:2){
 
 #Performance tests
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'Performance Test'", inputs$quarter_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
@@ -330,7 +330,7 @@ for(i in 1:2){
 }
 
 for(i in 1:2){
-  query <- paste0("SELECT * FROM fieldwork.srt_full
+  query <- paste0("SELECT * FROM fieldwork.viw_srt_full
    WHERE phase = '", inputs$phase, "' AND
    type = 'Performance Test'", inputs$to_date_range[i], inputs$public_query_text)
   results <- dbGetQuery(mars, query)
