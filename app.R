@@ -22,6 +22,12 @@ library(DT)
 #reactable for reactable tables
 library(reactable)
 
+#annual report stuff
+library(reactablefmtr)
+library(shinydashboard)
+library(openxlsx)
+
+
 #0.1: database connection and global options --------
 
 #set default page length for datatables
@@ -31,7 +37,6 @@ options(DT.options = list(pageLength = 15))
 #using a pool connection so separate connnections are unified
 #gets environmental variables saved in local or pwdrstudio environment
 poolConn <- dbPool(odbc(), dsn = "mars14_data", uid = Sys.getenv("shiny_uid"), pwd = Sys.getenv("shiny_pwd"))
-
 #disconnect from db on stop 
 onStop(function(){
   poolClose(poolConn)
@@ -44,6 +49,8 @@ jscode <- 'window.onbeforeunload = function() { return "Please use the button on
 #each script contains a module, which includes UI and server code
 source("monitoring_stats.R")
 source("quarterly_report.R")
+source("annual_report.R")
+
 
 
 #1: UI FUNCTION -----
@@ -69,11 +76,14 @@ ui <- function(req){
     tags$head(tags$script(jscode)),
     #must call useShinyjs() for shinyjs() functionality to work in app
     useShinyjs(),
-    navbarPage("Monitoring Stats",  id = "inTabset",#theme = shinytheme("cerulean"),
+    navbarPage("Monitoring Stats",  id = "inTabset", theme = shinytheme("cerulean"),
       #Stats
       m_statsUI("stats", current_fy = current_fy, years = years),
       #Quarterly Report
-      q_reportUI("q_report", current_fy = current_fy, years = years)
+      q_reportUI("q_report", current_fy = current_fy, years = years),
+      #Annual Report
+      a_reportUI("a_report", current_fy = current_fy, years = years)
+      
       
     )
   )
@@ -96,6 +106,10 @@ server <- function(input, output, session) {
   
   #Quarterly Report
   q_report <- q_reportServer("q_report", parent_session = session, current_fy = current_fy, poolConn = poolConn)
+  
+  #Annual report
+  a_report <- a_reportServer("a_report", parent_session = session, current_fy = current_fy, poolConn = poolConn)
+  
   
 }
 
