@@ -6,7 +6,7 @@
   q_reportUI <- function(id, label = "q_report", current_fy, years){
     ns <- NS(id)
     tabPanel(title = "Quarterly Report", value = "q_report",
-    fluidPage(#theme = shinytheme("cerulean"),
+    fluidPage(theme = shinytheme("cerulean"),
               titlePanel("Quarterly Report Counts"), 
               #1.1 General Inputs
               sidebarPanel(
