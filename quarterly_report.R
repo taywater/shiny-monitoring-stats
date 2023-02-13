@@ -62,6 +62,13 @@
                                              input$quarter == "Q3" ~ "9/30", 
                                              input$quarter == "Q4" ~ "12/31"))
         
+        #creating a table to show exactly one quarter ahead of the one user selects for metric
+        rv$qa_quarter <- reactive(case_when(input$quarter == "Q1" ~ "Q2", 
+                                             input$quarter == "Q2" ~ "Q3", 
+                                             input$quarter == "Q3" ~ "Q4", 
+                                             input$quarter == "Q4" ~ "Q1"))
+        
+        
         #convert FY/Quarter to a real date
         rv$start_date <- reactive(lubridate::mdy(paste0(rv$start_quarter(), "/", input$fy))%m-% months(6))
         rv$end_date <- reactive(lubridate::mdy(paste0(rv$end_quarter(), "/", input$fy))%m-% months(6))
@@ -215,42 +222,152 @@
         pupc$systems_monitored_to_date <- reactive(data.frame(Metric = as.character("Systems Monitored to-Date"),
                                                                    Description = "All systems at which HOBOs have been deployed",
                                                                    Count = pupc$systems_monitored_to_date_value()))
-
-        #systems with QA'd CWL Data to-date
-        pupc$new_systems_QA_data_qtr_q <- reactive(paste0("with fq_input as (select fiscal_quarter_lookup_uid from admin.tbl_fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
-                                                              str_sub(input$fy,-2),input$quarter,"') ,
-                                                              
-                                                              newest_smps as (select distinct system_id from data.tbl_ow_leveldata_entrydates 
-                                                              where fiscal_quarter_lookup_uid = (select max(fiscal_quarter_lookup_uid) from fq_input)),
-                                                              
-                                                              previous_date as (select max(fiscal_quarter_lookup_uid) as previous_date from data.tbl_ow_leveldata_entrydates 
-                                                              where fiscal_quarter_lookup_uid < (select max(fiscal_quarter_lookup_uid)from fq_input)),
-                                                              
-                                                              previous_smps as (select distinct system_id from data.tbl_ow_leveldata_entrydates 
-                                                              where fiscal_quarter_lookup_uid <= (select previous_date from previous_date))
-                                                              
-                                                              select COUNT(*) from newest_smps 
-                                                              where system_id not in (select system_id from previous_smps) -- System never given CWL before
-                                                              and system_id like '%-%' -- Public SMPs only"))
+# 
+#         #systems with QA'd CWL Data to-date
+#         pupc$new_systems_QA_data_qtr_q <- reactive(paste0("with fq_input as (select fiscal_quarter_lookup_uid from admin.tbl_fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
+#                                                               str_sub(input$fy,-2),input$quarter,"') ,
+#                                                               
+#                                                               newest_smps as (select distinct system_id from data.tbl_ow_leveldata_entrydates 
+#                                                               where fiscal_quarter_lookup_uid = (select max(fiscal_quarter_lookup_uid) from fq_input)),
+#                                                               
+#                                                               previous_date as (select max(fiscal_quarter_lookup_uid) as previous_date from data.tbl_ow_leveldata_entrydates 
+#                                                               where fiscal_quarter_lookup_uid < (select max(fiscal_quarter_lookup_uid)from fq_input)),
+#                                                               
+#                                                               previous_smps as (select distinct system_id from data.tbl_ow_leveldata_entrydates 
+#                                                               where fiscal_quarter_lookup_uid <= (select previous_date from previous_date))
+#                                                               
+#                                                               select COUNT(*) from newest_smps 
+#                                                               where system_id not in (select system_id from previous_smps) -- System never given CWL before
+#                                                               and system_id like '%-%' -- Public SMPs only"))
+#         
+#         pupc$new_systems_QA_data_qtr_value <- reactive(dbGetQuery(poolConn, pupc$new_systems_QA_data_qtr_q()))
+#         pupc$new_systems_QA_data_qtr <- reactive(data.frame(Metric = "New Systems With QA data this quarter",
+#                                                             Description = "Systems that have QA data for the first time this quarter",
+#                                                               Count = pupc$new_systems_QA_data_qtr_value()))
+# 
+#         pupc$systems_QA_data_to_date_q <- reactive(paste0("with fq_input as (select fiscal_quarter_lookup_uid from admin.tbl_fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
+#                                                           str_sub(input$fy,-2),input$quarter,"') ,
+#                                                               
+#                                                               current_systems as (select distinct system_id from data.tbl_ow_leveldata_entrydates 
+#                                                               where fiscal_quarter_lookup_uid <= (select max(fiscal_quarter_lookup_uid) from fq_input))
+#                                                               
+#                                                               select COUNT(*) from current_systems 
+#                                                               where system_id like '%-%' -- Public Systems only"))
+#         
+#         pupc$systems_QA_data_to_date_value <- reactive(dbGetQuery(poolConn, pupc$systems_QA_data_to_date_q()))
+#         pupc$systems_QA_data_to_date <- reactive(data.frame(Metric = "Systems With QA data to-Date",
+#                                                             Description = "All systems with QA data in the Postgres database",
+#                                                             Count = pupc$systems_QA_data_to_date_value()))
         
-        pupc$new_systems_QA_data_qtr_value <- reactive(dbGetQuery(poolConn, pupc$new_systems_QA_data_qtr_q()))
-        pupc$new_systems_QA_data_qtr <- reactive(data.frame(Metric = "New Systems With QA data this quarter",
-                                                            Description = "Systems that have QA data for the first time this quarter",
-                                                              Count = pupc$new_systems_QA_data_qtr_value()))
-
-        pupc$systems_QA_data_to_date_q <- reactive(paste0("with fq_input as (select fiscal_quarter_lookup_uid from admin.tbl_fiscal_quarter_lookup WHERE fiscal_quarter = 'FY",
-                                                          str_sub(input$fy,-2),input$quarter,"') ,
-                                                              
-                                                              current_systems as (select distinct system_id from data.tbl_ow_leveldata_entrydates 
-                                                              where fiscal_quarter_lookup_uid <= (select max(fiscal_quarter_lookup_uid) from fq_input))
-                                                              
-                                                              select COUNT(*) from current_systems 
-                                                              where system_id like '%-%' -- Public Systems only"))
         
-        pupc$systems_QA_data_to_date_value <- reactive(dbGetQuery(poolConn, pupc$systems_QA_data_to_date_q()))
-        pupc$systems_QA_data_to_date <- reactive(data.frame(Metric = "Systems With QA data to-Date",
+    #change the logic of metics 5 and 6 and based it off the found_in_ow_table
+        entrydates <- dbGetQuery(poolConn, "SELECT *, data.fun_date_to_fiscal_quarter_null(found_in_ow_table) as found_quarter FROM data.tbl_ow_leveldata_entrydates WHERE smp_id LIKE '%-%-%'")
+        fiscal_q <- dbGetQuery(poolConn, "SELECT * FROM admin.tbl_fiscal_quarter_lookup")
+        
+        
+        #pull the current quarter
+        current_fiscal_quid <- reactive ({
+          
+          current_q_uid <- fiscal_q %>%
+            filter(fiscal_quarter == paste("FY",str_sub(input$fy,-2),input$quarter, sep = "")) %>%
+            select(fiscal_quarter_lookup_uid) %>%
+            pull
+
+          return(current_q_uid)
+        })
+        
+        #pull the next quarter
+        next_fiscal_q <- reactive ({
+          
+        current_q_uid <- fiscal_q %>%
+          filter(fiscal_quarter == paste("FY",str_sub(input$fy,-2),input$quarter, sep = "")) %>%
+          select(fiscal_quarter_lookup_uid) %>%
+          pull
+        next_q <- fiscal_q %>%
+          filter(fiscal_quarter_lookup_uid == current_q_uid+1) %>%
+          select(fiscal_quarter) %>%
+          pull
+        
+        return(next_q)
+        })
+        
+        #New systems with QA this Quarter
+        newly_found_systems <- reactive ({
+          
+        #systems when function data.fun_update_leveldata_insert_recordkeeping called for current quarter
+        systems_current <- entrydates %>%
+          filter(found_quarter ==next_fiscal_q() ) %>%
+          select(system_id, earliest_data_date) %>%
+          na.omit()%>%
+          distinct()
+
+        #systems when function data.fun_update_leveldata_insert_recordkeeping called for previous quarter
+        system_previous <- entrydates %>%
+          filter(found_quarter == paste("FY",str_sub(input$fy,-2),input$quarter, sep = ""))%>%
+          select(system_id,earliest_data_date) %>%
+          na.omit()%>%
+          distinct()
+
+        #New Systems With QA data this quarter
+        newly_found <- data.frame(count=systems_current %>%
+          anti_join(system_previous, by="system_id") %>%
+          select(system_id) %>%
+          nrow())
+        
+        return(newly_found)
+
+        })
+        
+        
+        #Systems With QA data to-Date
+        todate_qa_systems <- reactive({
+          
+        systems_current <- entrydates %>%
+            filter(found_quarter ==next_fiscal_q() ) %>%
+            select(system_id, earliest_data_date) %>%
+            na.omit()%>%
+            distinct()
+          
+        #Systems With QA data to-Date
+        todate<- data.frame(count = systems_current %>%
+                 select(system_id) %>%
+                 distinct() %>%
+                 nrow())
+        
+        return(todate)
+          
+        })
+        
+        #The logic only works for FY22Q3 and beyond otherwise returns NA
+        pupc$new_systems_QA_data_qtr <- reactive({
+          
+          if(current_fiscal_quid()>45){
+           output_qa_systems <- data.frame(Metric = "New Systems With QA data this quarter",
+                                                            Description = "Systems whose QA data entered the database for the first time this quarter",
+                                                            Count = newly_found_systems())
+          } else{
+           output_qa_systems <- data.frame(Metric = "New Systems With QA data this quarter",
+                                         Description = "Systems whose QA data entered the database for the first time this quarter",
+                                         count = NA)
+          }
+          return(output_qa_systems)
+          
+          })
+        
+        pupc$systems_QA_data_to_date <- reactive({
+          
+          if(current_fiscal_quid()>45){
+            output_qa_systems_todate <- data.frame(Metric = "Systems With QA data to-Date",
                                                             Description = "All systems with QA data in the Postgres database",
-                                                            Count = pupc$systems_QA_data_to_date_value()))
+                                                            Count = todate_qa_systems())
+          } else{
+            output_qa_systems_todate <- data.frame(Metric = "Systems With QA data to-Date",
+                                                            Description = "All systems with QA data in the Postgres database",
+                                                            count = NA)
+          }
+          return(output_qa_systems_todate)
+          
+        })
         
         
         #SRT pre-inspection tests this quarter
