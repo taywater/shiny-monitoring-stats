@@ -158,10 +158,19 @@
               paste("FY",input$fy,"_",input$quarter,"_QA","_",Sys.Date(),".xlsx", sep = "")
             },
             content = function(filename){
-
-              df_list_qa <- list(smps_sensors_quarter= rv$public_sys_smp_sensors_value(),
-                              systems_cwl_srt_todate= rv$cwl_sys_postcon_srt_value(),
-                              systems_no_cwl_before=rv$systems_no_cwl_before_value())
+              
+              #Adding explaination of each sheet 
+              sheet_1 <- rv$public_sys_smp_sensors_value()
+              sheet_1["PUBLIC SMPs and Systems with sensors collected during the Quarter"] <- NA
+              sheet_2 <- rv$cwl_sys_postcon_srt_value()
+              sheet_2["Systems with CWL in Database or Post-construction SRTs compared to PostCon.xlsx"] <- NA
+              sheet_3 <- rv$systems_no_cwl_before_value()
+              sheet_3["System IDs that have never received CWL monitoring before this quarter's report"] <- NA
+              
+              df_list_qa <- list(sheet_1= sheet_1,
+                                 sheet_2= sheet_2,
+                                 sheet_3= sheet_3
+                                 )
               write.xlsx(x = df_list_qa , file = filename, rowNames = TRUE)
             }
           )
