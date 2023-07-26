@@ -14,11 +14,12 @@
                          column(6, selectInput(ns("quarter"), "Quarter", choices = c("Q1", "Q2", "Q3", "Q4")))
                 ),
               #1.2 Buttons
-                        actionButton(ns("table_button"), "Generate Table", style = "width: 123px;"),
-                        shinyjs::disabled(downloadButton(ns("postcon_qa"), "QA Queries", style = "width: 123px;")),
-                        shinyjs::disabled(downloadButton(ns("public_postcon"), "Public Post-Construction Tables", style = "width: 250px;")),
-                        shinyjs::disabled(downloadButton(ns("public_con"), "Public Construction Tables", style = "width: 250px;")),
-                        shinyjs::disabled(downloadButton(ns("private_postcon"), "Private Post-Construction Tables", style = "width: 250px;"))
+                fluidRow(column(12, actionButton(ns("table_button"), "Generate Table", style = "width: 123px;"))),
+                fluidRow(column(12, br())),
+                        #shinyjs::disabled(downloadButton(ns("postcon_qa"), "QA Queries", style = "width: 123px;")),
+                        shinyjs::disabled(downloadButton(ns("public_postcon"), "Public Post-Construction Tables", style = "width: 300px;")),
+                        shinyjs::disabled(downloadButton(ns("public_con"), "Public Construction Tables", style = "width: 300px;")),
+                        shinyjs::disabled(downloadButton(ns("private_postcon"), "Private Post-Construction Tables", style = "width: 300px;"))
               
               
               
@@ -56,32 +57,32 @@
         sf <- lubridate::stamp("March 1, 1999", orders = "%B %d, %Y")
         
         #get quarters as dates
-        rv$start_quarter <- reactive(case_when(input$quarter == "Q1" ~ "1/1", 
-                                               input$quarter == "Q2" ~ "4/1", 
-                                               input$quarter == "Q3" ~ "7/1", 
-                                               input$quarter == "Q4" ~ "10/1"))
+        rv$start_quarter <- reactive(case_when(input$quarter == "Q3" ~ "1/1", 
+                                               input$quarter == "Q4" ~ "4/1", 
+                                               input$quarter == "Q1" ~ "7/1", 
+                                               input$quarter == "Q2" ~ "10/1"))
         
-        rv$end_quarter <- reactive(case_when(input$quarter == "Q1" ~ "3/31", 
-                                             input$quarter == "Q2" ~ "6/30", 
-                                             input$quarter == "Q3" ~ "9/30", 
-                                             input$quarter == "Q4" ~ "12/31"))
+        rv$end_quarter <- reactive(case_when(input$quarter == "Q3" ~ "3/31", 
+                                             input$quarter == "Q4" ~ "6/30", 
+                                             input$quarter == "Q1" ~ "9/30", 
+                                             input$quarter == "Q2" ~ "12/31"))
         
         #creating a table to show exactly one quarter ahead of the one user selects for metric
-        rv$qa_quarter <- reactive(case_when(input$quarter == "Q1" ~ "Q2", 
-                                             input$quarter == "Q2" ~ "Q3", 
-                                             input$quarter == "Q3" ~ "Q4", 
-                                             input$quarter == "Q4" ~ "Q1"))
+        # rv$qa_quarter <- reactive(case_when(input$quarter == "Q1" ~ "Q2", 
+        #                                      input$quarter == "Q2" ~ "Q3", 
+        #                                      input$quarter == "Q3" ~ "Q4", 
+        #                                      input$quarter == "Q4" ~ "Q1"))
         
         
         #convert FY/Quarter to a real date
-        rv$start_date <- reactive(lubridate::mdy(paste0(rv$start_quarter(), "/", input$fy))%m-% months(6))
-        rv$end_date <- reactive(lubridate::mdy(paste0(rv$end_quarter(), "/", input$fy))%m-% months(6))
+        rv$start_date <- reactive(lubridate::mdy(paste0(rv$start_quarter(), "/", input$fy)))
+        rv$end_date <- reactive(lubridate::mdy(paste0(rv$end_quarter(), "/", input$fy)))
         
         #2.2 observe event --------
         observeEvent(input$table_button, {
           
           #enable downloading after table in generated
-          enable("postcon_qa")
+          #enable("postcon_qa")
           enable("public_postcon")
           enable("public_con")
           enable("private_postcon")
@@ -153,27 +154,27 @@
           )
 
           #Downloading the QA query list of systems-3 sheets of systems/smps
-          output$postcon_qa <- downloadHandler(
-            filename = function() {
-              paste("FY",input$fy,"_",input$quarter,"_QA","_",Sys.Date(),".xlsx", sep = "")
-            },
-            content = function(filename){
-              
-              #Adding explaination of each sheet 
-              sheet_1 <- rv$public_sys_smp_sensors_value()
-              sheet_1["PUBLIC SMPs and Systems with sensors collected during the Quarter"] <- NA
-              sheet_2 <- rv$cwl_sys_postcon_srt_value()
-              sheet_2["Systems with CWL in Database or Post-construction SRTs compared to PostCon.xlsx"] <- NA
-              sheet_3 <- rv$systems_no_cwl_before_value()
-              sheet_3["System IDs that have never received CWL monitoring before this quarter's report"] <- NA
-              
-              df_list_qa <- list(sheet_1= sheet_1,
-                                 sheet_2= sheet_2,
-                                 sheet_3= sheet_3
-                                 )
-              write.xlsx(x = df_list_qa , file = filename, rowNames = TRUE)
-            }
-          )
+          # output$postcon_qa <- downloadHandler(
+          #   filename = function() {
+          #     paste("FY",input$fy,"_",input$quarter,"_QA","_",Sys.Date(),".xlsx", sep = "")
+          #   },
+          #   content = function(filename){
+          #     
+          #     #Adding explaination of each sheet 
+          #     sheet_1 <- rv$public_sys_smp_sensors_value()
+          #     sheet_1["PUBLIC SMPs and Systems with sensors collected during the Quarter"] <- NA
+          #     sheet_2 <- rv$cwl_sys_postcon_srt_value()
+          #     sheet_2["Systems with CWL in Database or Post-construction SRTs compared to PostCon.xlsx"] <- NA
+          #     sheet_3 <- rv$systems_no_cwl_before_value()
+          #     sheet_3["System IDs that have never received CWL monitoring before this quarter's report"] <- NA
+          #     
+          #     df_list_qa <- list(sheet_1= sheet_1,
+          #                        sheet_2= sheet_2,
+          #                        sheet_3= sheet_3
+          #                        )
+          #     write.xlsx(x = df_list_qa , file = filename, rowNames = TRUE)
+          #   }
+          # )
        
 
           #Downloading the tables behind the counts
