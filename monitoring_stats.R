@@ -6,7 +6,7 @@
   m_statsUI <- function(id, label = "stats", current_fy, years){
     ns <- NS(id)
     tabPanel(title = "Monitoring Stats", value = "m_stats",
-    fluidPage(theme = shinytheme("cerulean"),
+    fluidPage(#theme = shinytheme("cerulean"),
                titlePanel("Monitoring Stats"),
              #1.1 General Inputs ----
                 sidebarPanel(
@@ -16,11 +16,11 @@
                           fluidRow(column(6,
                           selectInput(ns("start_fy"), "Start Fiscal Year (FY)", choices = years)),
                           column(6,selectInput(ns("start_quarter"), "Start Fiscal Quarter", 
-                                               choices = c("Q1" = "1/1", "Q2" = "4/1", "Q3" = "7/1", "Q4" = "10/1")))),
+                                               choices = c("Q1" = "7/1", "Q2" = "10/1","Q3" = "1/1", "Q4" = "4/1")))),
                           fluidRow(column(6,
                             selectInput(ns("end_fy"), "End Fiscal Year (FY)", choices = years)),
                             column(6,selectInput(ns("end_quarter"), "End Fiscal Quarter", 
-                                                 choices = c("Q1" = "3/31", "Q2" = "6/30", "Q3" = "9/30", "Q4" = "12/31"))))
+                                                 choices = c("Q1" = "9/30", "Q2" = "12/31","Q3" = "3/31", "Q4" = "6/30"))))
                           ), 
                   selectInput(ns("phase"), "Construction Phase", choices = c("Construction", "Post-Construction"), selected = "Post-Construction"),
                   selectInput(ns("public_private"), "Ownership (for field tests)", choices = c("Public and Private", "Public", "Private")),
@@ -86,8 +86,8 @@ m_statsServer <- function(id, parent_session, current_fy, poolConn){
       sf <- lubridate::stamp("March 1, 1999", orders = "%B %d, %Y")
       
       #convert FY/Quarter to a real date
-      rv$start_date <- reactive(lubridate::mdy(paste0(input$start_quarter, "/", input$start_fy))%m-% months(6))
-      rv$end_date <- reactive(lubridate::mdy(paste0(input$end_quarter, "/", input$end_fy))%m-% months(6))
+      rv$start_date <- reactive(lubridate::mdy(paste0(input$start_quarter, "/", ifelse(input$start_quarter == "7/1" | input$start_quarter == "10/1", as.numeric(input$start_fy)-1,input$start_fy))))
+      rv$end_date <- reactive(lubridate::mdy(paste0(input$end_quarter, "/", ifelse(input$end_quarter == "9/30" | input$end_quarter == "12/31", as.numeric(input$end_fy)-1,input$end_fy))))
       
       #system and smp
       observeEvent(input$table_button, {
