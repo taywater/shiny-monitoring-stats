@@ -6,7 +6,7 @@
   a_reportUI <- function(id, label = "a_report", current_fy, years){
     ns <- NS(id)
     tabPanel(title = "Annual Report", value = "a_report",
-    fluidPage(theme = shinytheme("cerulean"),
+    fluidPage(#theme = shinytheme("cerulean"),
               titlePanel("Annual Report Counts"), 
               #1.1 General Inputs
               sidebarPanel(
@@ -96,11 +96,12 @@
             #Sensors deployed this fiscal year
             #In the text, and in table 3.1
             
-            sql_string_1 <- "select count(*) from fieldwork.viw_deployment_full_cwl
-                                  where (collection_dtime_est > '%s' OR collection_dtime_est is null)
-                                  and deployment_dtime_est between '%s' and '%s'
-                                  and public =  TRUE"
-            table_3_1_public_sensors_deployed_postcon <- dbGetQuery(poolConn, paste(sprintf(sql_string_1, FYSTART_reactive(),FYSTART_reactive(), FYEND_reactive()),collapse="")) 
+            sql_string_1 <- "SELECT COUNT(distinct(sensor_serial)) FROM fieldwork.viw_deployment_full_cwl 
+                                             WHERE deployment_dtime_est <= '%s'
+                                                    AND (collection_dtime_est >= '%s' 
+                                             OR collection_dtime_est IS NULL) AND 
+                                             public = TRUE"
+            table_3_1_public_sensors_deployed_postcon <- dbGetQuery(poolConn, paste(sprintf(sql_string_1, FYEND_reactive(), FYSTART_reactive()), collapse="")) 
             
             ##Public systems monitored this fiscal year
             #In the text, and in table 3.1
@@ -109,7 +110,14 @@
                                             and (collection_dtime_est <= '%s'
                                             	or collection_dtime_est is null) 
                                             and d.public = true"
-            table_3_1_public_systems_monitored <- dbGetQuery(poolConn, paste(sprintf(sql_string_2, FYSTART_reactive(), FYEND_reactive(), FYEND_reactive()),collapse="")) 
+            
+            sql_string_2 <- "select count(distinct admin.fun_smp_to_system(d.smp_id)) from fieldwork.viw_deployment_full_cwl d
+                                            where d.public = true and
+                                            (deployment_dtime_est between '%s' and '%s'
+                                            or collection_dtime_est between '%s' and '%s'
+                                            or (deployment_dtime_est < '%s' and collection_dtime_est is null))"
+            
+            table_3_1_public_systems_monitored <- dbGetQuery(poolConn, paste(sprintf(sql_string_2, FYSTART_reactive(), FYEND_reactive(), FYSTART_reactive(), FYEND_reactive(), FYSTART_reactive()), collapse="")) 
             
             
             #Newly monitored systems this fiscal year
