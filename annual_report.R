@@ -96,12 +96,11 @@
             #Sensors deployed this fiscal year
             #In the text, and in table 3.1
             
-            sql_string_1 <- "SELECT COUNT(distinct(sensor_serial)) FROM fieldwork.viw_deployment_full_cwl 
-                                             WHERE deployment_dtime_est <= '%s'
-                                                    AND (collection_dtime_est >= '%s' 
-                                             OR collection_dtime_est IS NULL) AND 
-                                             public = TRUE"
-            table_3_1_public_sensors_deployed_postcon <- dbGetQuery(poolConn, paste(sprintf(sql_string_1, FYEND_reactive(), FYSTART_reactive()), collapse="")) 
+            sql_string_1 <- "select count(*) from fieldwork.viw_deployment_full_cwl
+                                  where (collection_dtime_est > '%s' OR collection_dtime_est is null)
+                                  and deployment_dtime_est between '%s' and '%s'
+                                  and public =  TRUE"
+            table_3_1_public_sensors_deployed_postcon <- dbGetQuery(poolConn, paste(sprintf(sql_string_1, FYSTART_reactive(),FYSTART_reactive(), FYEND_reactive()),collapse="")) 
             
             ##Public systems monitored this fiscal year
             #In the text, and in table 3.1
