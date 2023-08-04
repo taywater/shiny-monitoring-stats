@@ -6,7 +6,7 @@
   q_reportUI <- function(id, label = "q_report", current_fy, years){
     ns <- NS(id)
     tabPanel(title = "Quarterly Report", value = "q_report",
-    fluidPage(theme = shinytheme("cerulean"),
+    fluidPage(#theme = shinytheme("cerulean"),
               titlePanel("Quarterly Report Counts"), 
               #1.1 General Inputs
               sidebarPanel(
@@ -75,8 +75,9 @@
         
         
         #convert FY/Quarter to a real date
-        rv$start_date <- reactive(lubridate::mdy(paste0(rv$start_quarter(), "/", input$fy)))
-        rv$end_date <- reactive(lubridate::mdy(paste0(rv$end_quarter(), "/", input$fy)))
+        rv$start_date <- reactive(lubridate::mdy(paste0(rv$start_quarter(), "/", ifelse(input$quarter == "Q1" | input$quarter == "Q2", as.numeric(input$fy)-1,input$fy))))
+        rv$end_date <- reactive(lubridate::mdy(paste0(rv$end_quarter(), "/", ifelse(input$quarter == "Q1" | input$quarter == "Q2", as.numeric(input$fy)-1,input$fy))))
+       
         
         #2.2 observe event --------
         observeEvent(input$table_button, {
