@@ -104,12 +104,7 @@
             
             ##Public systems monitored this fiscal year
             #In the text, and in table 3.1
-            sql_string_2 <- "select count(distinct admin.fun_smp_to_system(d.smp_id)) from fieldwork.viw_deployment_full_cwl d
-                                            where deployment_dtime_est between '%s' and '%s'
-                                            and (collection_dtime_est <= '%s'
-                                            	or collection_dtime_est is null) 
-                                            and d.public = true"
-            
+    
             sql_string_2 <- "select count(distinct admin.fun_smp_to_system(d.smp_id)) from fieldwork.viw_deployment_full_cwl d
                                             where d.public = true and
                                             (deployment_dtime_est between '%s' and '%s'
@@ -147,8 +142,10 @@
             table_3_1 <- bind_cols(`This Fiscal Year`,`To Date`)
             colnames(table_3_1)<- c("This Fiscal Year","To Date")
             rownames(table_3_1)<-c("Sensors Deployment","Systems","Systems Newly Monitored")
+            table_3_1$Description <- c("Number of Sensor deployments, Doesn't include SRTs, Can Include duplicated sensor ids","Public systems with CWL data","Systems first deployed during this fiscal year")
             
-            
+            table_3_1 <- table_3_1 %>%
+              select(Description, `This Fiscal Year`, `To Date`)
             
             return(table_3_1)
             
@@ -190,7 +187,16 @@
             table_3_2 <- table_3_2_public_constructed_systems_total %>% 
               left_join(table_3_2_public_smp_bytype_todate, by="SMP Type")
             table_3_2<-table_3_2[,c(1,3,2)]
+            
+            #Replace NA with zero
             table_3_2[is.na(table_3_2)] <-  0
+            
+            table_3_2$Description <- NA
+            table_3_2 <- table_3_2 %>%
+              select(`SMP Type`, Description,`Total Constructed Public SMPs`, `Monitored SMPs`)
+            
+            table_3_2[table_3_2[,"SMP Type"] == "Infiltration/Storage Trench", 2] <- "Also listed as Trench"
+            table_3_2[table_3_2[,"SMP Type"] == "Permeable Pavement", 2] <- "Also listed as Pervious Paving"
             
             return(table_3_2)
             
@@ -231,6 +237,7 @@
               left_join(table_3_3_public_system_postcon_srt, by="type") %>%
               select(`SRT Type`=type,`This Fiscal Year`=count.y, `To Date`=count.x)
             table_3_3[is.na(table_3_3)] <-  0
+            
             
             return(table_3_3)
             
@@ -524,6 +531,14 @@
             table_3_10 <- bind_cols(`This Fiscal Year`,`To Date`)
             colnames(table_3_10)<- c("This Fiscal Year","To Date")
             rownames(table_3_10)<-c("Sensors Deployments","Systems","Systems Newly Monitored")
+            
+            
+            table_3_10$Description <- NA
+            table_3_10 <- table_3_10 %>%
+              select(Description,`This Fiscal Year`, `To Date`)
+            
+            table_3_10$Description <- c("Number of Sensor deployments, Doesn't include SRTs, Can Include duplicated sensor ids","Private systems with CWL data","Private systems first deployed during this fiscal year")
+            
             
             return(table_3_10)
             
