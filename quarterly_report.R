@@ -376,8 +376,8 @@
         
         pupc$phase <- "Post-Construction"
         
-        #Sensors deployed this quarter
-        #hobos deployed (public)
+        # Monitoring locations- unique combo of smp-id/ow_suffix
+        
         pupc$sensors_deployed_q <- reactive(paste0("SELECT COUNT(distinct(smp_id, ow_suffix)) FROM fieldwork.viw_deployment_full_cwl 
                                              WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
@@ -389,8 +389,8 @@
                                                  Description = "Total unique combinations of smp id/observation well suffix",
                                                  Count = pupc$sensors_deployed_value()))
         
-        #hobos deployed (public)- entire table for download
-        pupc$sensors_deployed_q_table <- reactive(paste0("SELECT distinct(sensor_serial) FROM fieldwork.viw_deployment_full_cwl 
+        #table for download
+        pupc$sensors_deployed_q_table <- reactive(paste0("SELECT distinct(smp_id, ow_suffix) FROM fieldwork.viw_deployment_full_cwl 
                                              WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
                                              OR collection_dtime_est IS NULL) AND 
@@ -920,8 +920,7 @@
         
         prpc$phase <- "Post-Construction"
         
-        #Sensors deployed this quarter
-        #hobos deployed (public)
+        # Monitoring locations- unique combo of smp-id/ow_suffix
         prpc$sensors_deployed_q <- reactive(paste0("SELECT COUNT(distinct(smp_id, ow_suffix)) FROM fieldwork.viw_deployment_full_cwl 
                                              WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
@@ -933,9 +932,8 @@
                                                      Description = "Total unique combinations of smp id/observation well suffix",
                                                      Count = prpc$sensors_deployed_value()))
         
-        #Sensors deployed this quarter-table
-        #hobos deployed (public)
-        prpc$sensors_deployed_q_table <- reactive(paste0("SELECT distinct(sensor_serial) FROM fieldwork.viw_deployment_full_cwl 
+        #dl table
+        prpc$sensors_deployed_q_table <- reactive(paste0("SELECT distinct(smp_id, ow_suffix) FROM fieldwork.viw_deployment_full_cwl 
                                              WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
                                              OR collection_dtime_est IS NULL) AND 
