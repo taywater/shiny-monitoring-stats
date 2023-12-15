@@ -378,7 +378,7 @@
         
         #Sensors deployed this quarter
         #hobos deployed (public)
-        pupc$sensors_deployed_q <- reactive(paste0("SELECT COUNT(distinct(sensor_serial)) FROM fieldwork.viw_deployment_full_cwl 
+        pupc$sensors_deployed_q <- reactive(paste0("SELECT COUNT(distinct(smp_id, ow_suffix)) FROM fieldwork.viw_deployment_full_cwl 
                                              WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
                                              OR collection_dtime_est IS NULL) AND 
@@ -922,7 +922,7 @@
         
         #Sensors deployed this quarter
         #hobos deployed (public)
-        prpc$sensors_deployed_q <- reactive(paste0("SELECT COUNT(distinct(sensor_serial)) FROM fieldwork.viw_deployment_full_cwl 
+        prpc$sensors_deployed_q <- reactive(paste0("SELECT COUNT(distinct(smp_id, ow_suffix)) FROM fieldwork.viw_deployment_full_cwl 
                                              WHERE deployment_dtime_est <= '", rv$end_date(), "'
                                                     AND (collection_dtime_est >= '", rv$start_date(), "' 
                                              OR collection_dtime_est IS NULL) AND 
