@@ -385,8 +385,8 @@
                                              public = TRUE"))
         
         pupc$sensors_deployed_value <- reactive(dbGetQuery(poolConn, pupc$sensors_deployed_q()))
-        pupc$sensors_deployed <- reactive(data.frame(Metric = "Sensors Deployed", 
-                                                 Description = "Total HOBOs deployed this quarter",
+        pupc$sensors_deployed <- reactive(data.frame(Metric = "Monitoring Locations", 
+                                                 Description = "Total unique combinations of smp id/observation well suffix",
                                                  Count = pupc$sensors_deployed_value()))
         
         #hobos deployed (public)- entire table for download
@@ -929,8 +929,8 @@
                                              public = FALSE"))
         
         prpc$sensors_deployed_value <- reactive(dbGetQuery(poolConn, prpc$sensors_deployed_q()))
-        prpc$sensors_deployed <- reactive(data.frame(Metric = "Sensors Deployed", 
-                                                     Description = "Total HOBOs deployed this quarter",
+        prpc$sensors_deployed <- reactive(data.frame(Metric = "Monitoring Locations", 
+                                                     Description = "Total unique combinations of smp id/observation well suffix",
                                                      Count = prpc$sensors_deployed_value()))
         
         #Sensors deployed this quarter-table
