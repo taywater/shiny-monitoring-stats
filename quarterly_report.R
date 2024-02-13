@@ -518,6 +518,7 @@
         newly_found <- data.frame(count=systems_current %>%
           anti_join(system_previous, by="system_id") %>%
           select(system_id) %>%
+          distinct() %>%
           nrow())
         
         return(newly_found)
@@ -579,7 +580,9 @@
         pupc$new_systems_QA_data_qtr_table <- reactive({
           
           if(current_fiscal_quid()>45){
-            output_qa_systems_table <- rv$systems_no_cwl_before_value()
+            output_qa_systems_table <- rv$systems_no_cwl_before_value() %>%
+              select(system_id) %>%
+              distinct()
           } else{
             output_qa_systems_table <- NA
           }
