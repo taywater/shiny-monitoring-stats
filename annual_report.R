@@ -167,12 +167,12 @@
             
             table_3_2_public_smp_bytype_todate <- dbGetQuery(poolConn, paste(sprintf(sql_string_6,FYEND_reactive()),collapse=""))
             
-            #CAPIT statuses indicating constructed systems are Jillian Simmons's best recommendation
+            #cipit statuses indicating constructed systems are Jillian Simmons's best recommendation
             #Table 3-2 second column
             sql_string_7 <- "select count(*), smp_smptype from external.tbl_smpbdv g where g.smp_notbuiltretired is null 
-                                            and (g.capit_status = 'Closed' 
-                                            or g.capit_status = 'Construction-Substantially Complete' 
-                                            or g.capit_status = 'Construction-Contract Closed') 
+                                            and (g.cipit_status = 'Closed' 
+                                            or g.cipit_status = 'Construction-Substantially Complete' 
+                                            or g.cipit_status = 'Construction-Contract Closed') 
                                             group by smp_smptype"
             table_3_2_public_constructed_systems_total <- dbGetQuery(poolConn,sql_string_7)
             
@@ -550,13 +550,13 @@
             #Table 3.11: Post-Construction CWL-Monitoring of Private SMPs Listed by Type 
             #First column: Monitored private SMPs to date
             
-            sql_string_29 <- "select cr.\"SMPType\", count(distinct(d.smp_id)), d.public from
+            sql_string_29 <- "select cr.\"smp_type\", count(distinct(d.smp_id)), d.public from
                   fieldwork.viw_deployment_full_cwl d
-                  left join external.tbl_planreview_crosstab cr on d.smp_id = cr.\"SMPID\"::text
+                  left join external.tbl_planreview_crosstab cr on d.smp_id = cr.\"smp_id\"::text
                   where d.smp_id is not null
                   and d.deployment_dtime_est < '%s'
                   and d.public = false
-                  group by cr.\"SMPType\", d.public;"
+                  group by cr.\"smp_type\", d.public;"
             
             table_3_11_private_monitored_smps_postcon<- dbGetQuery(poolConn, paste(sprintf(sql_string_29,FYEND_reactive()),collapse=""))
             
@@ -564,24 +564,42 @@
             #Second column: Total constructed private SMPs
             
             
-            sql_string_30 <- "select count(*), cr.\"SMPType\"
-                  from external.tbl_planreview_projectsmpconcat pl
-                  left join external.tbl_planreview_designation de on de.\"ProjectID\" = pl.project_id
-                  left join external.tbl_planreview_crosstab cr on de.\"SMPID\" = cr.\"SMPID\"
-                  left join external.mat_assets sfc on de.\"SMPID\"::text = sfc.smp_id
-                  where cr.\"DCIA\" is not null
-                  and sfc.smp_id is not null
-                  and sfc.component_id is null
-                  group by cr.\"SMPType\";"
+            # sql_string_30 <- "select count(*), cr.\"smp_type\"
+            #       from external.tbl_planreview_projectsmpconcat pl
+            #       left join external.tbl_planreview_designation de on de.\"ProjectID\" = pl.project_id
+            #       left join external.tbl_planreview_crosstab cr on de.\"smp_id\" = cr.\"smp_id\"
+            #       left join external.mat_assets sfc on de.\"smp_id\"::text = sfc.smp_id
+            #       where cr.\"DCIA\" is not null
+            #       and sfc.smp_id is not null
+            #       and sfc.component_id is null
+            #       group by cr.\"smp_type\";"
+            
+            
+            # updated query reflecting changes in database tables
+            sql_string_30 <- "with sfc as (
+                                        	select distinct smp_id from external.mat_assets 
+                                        	where smp_id is not null
+                                        	and component_id is null
+                                        ), pl as (
+                                        	select distinct \"SMPID\" from external.tbl_planreview_private
+                                        ), cr as (
+                                        	select distinct smp_id, dcia_ft2, smp_type from external.tbl_planreview_crosstab
+                                        )
+                                        
+                                        select count(*), cr.\"smp_type\" from pl 
+                                        left join cr on pl.\"SMPID\"::text = cr.smp_id
+                                        inner join sfc on pl.\"SMPID\"::text = sfc.smp_id
+                                        where cr.dcia_ft2 is not null
+                                        group by cr.smp_type"
             
             
             
             table_3_11_private_total_constructed_smps<- dbGetQuery(poolConn, sql_string_30)
             
             table_3_11_private_total_constructed_smps <- table_3_11_private_total_constructed_smps %>%
-              select(`SMP Type` = SMPType,`Total Constructed Private SMPs`=count)
+              select(`SMP Type` = smp_type,`Total Constructed Private SMPs`=count)
             table_3_11_private_monitored_smps_postcon <- table_3_11_private_monitored_smps_postcon %>%
-              select(`SMP Type` = SMPType,`Monitored SMPs`=count)
+              select(`SMP Type` = smp_type,`Monitored SMPs`=count)
             table_3_11 <- table_3_11_private_total_constructed_smps %>% 
               left_join(table_3_11_private_monitored_smps_postcon, by="SMP Type")
             table_3_11<-table_3_11[,c(1,3,2)]
@@ -637,32 +655,32 @@
             #Table 3.13: Private SMPs with Post-Construction SRTs
             #First column: This fiscal year
             
-            sql_string <- "select cr.\"SMPType\", count(distinct newtests.system_id) FROM 
+            sql_string <- "select cr.\"smp_type\", count(distinct newtests.system_id) FROM 
 	(select system_id from fieldwork.viw_srt_full srt
     group by system_id, public
     having min(test_date) >= '%s'
     and min(test_date) <= '%s'
     and public = false) newtests
-    left join external.tbl_planreview_crosstab cr on newtests.system_id = cr.\"SMPID\"::text
-    group by cr.\"SMPType\""
+    left join external.tbl_planreview_crosstab cr on newtests.system_id = cr.\"smp_id\"::text
+    group by cr.\"smp_type\""
             
             
             table_3_13_private_postcon_smp_withSRT <- dbGetQuery(poolConn, paste(sprintf(sql_string, FYSTART_reactive(), FYEND_reactive()),collapse=""))
             
             #Table 3.13: Private SMPs with Post-Construction SRTs
             #2nd column: To Date
-            sql_string <-"select cr.\"SMPType\", count(distinct newtests.system_id) FROM 
+            sql_string <-"select cr.\"smp_type\", count(distinct newtests.system_id) FROM 
 	(select system_id from fieldwork.viw_srt_full srt
     group by system_id, public
     having min(test_date) <= '%s'
     and public = false) newtests
-    left join external.tbl_planreview_crosstab cr on newtests.system_id = cr.\"SMPID\"::text
-    group by cr.\"SMPType\""
+    left join external.tbl_planreview_crosstab cr on newtests.system_id = cr.\"smp_id\"::text
+    group by cr.\"smp_type\""
             
             table_3_13_private_postcon_smp_withSRT_todate <- dbGetQuery(poolConn, paste(sprintf(sql_string,FYEND_reactive()),collapse=""))
             
             table_3_13 <- table_3_13_private_postcon_smp_withSRT_todate %>%
-              left_join(table_3_13_private_postcon_smp_withSRT, by="SMPType")
+              left_join(table_3_13_private_postcon_smp_withSRT, by="smp_type")
             
             table_3_13[is.na(table_3_13)] <-  0
             table_3_13<-table_3_13[,c(1,3,2)]
@@ -754,6 +772,7 @@
     
         
         
+  
   
   
   
