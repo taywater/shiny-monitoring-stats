@@ -586,7 +586,7 @@
                                         	select distinct smp_id, dcia_ft2, smp_type from external.tbl_planreview_crosstab
                                         )
                                         
-                                        select count(*), cr.\"smp_type\" from pl 
+                                        select count(*), cr.smp_type from pl 
                                         left join cr on pl.\"SMPID\"::text = cr.smp_id
                                         inner join sfc on pl.\"SMPID\"::text = sfc.smp_id
                                         where cr.dcia_ft2 is not null
