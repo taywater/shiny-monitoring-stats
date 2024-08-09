@@ -457,7 +457,7 @@
             
             #Post-construction GW monitoring at GSI this fiscal year
             #First column, second row 
-            sql_string_22 <-"select count(distinct(site_name)) from fieldwork.viw_deployment_full where smp_id is not null 
+            sql_string_22 <-"select count(distinct(smp_id)) from fieldwork.viw_deployment_full where smp_id is not null 
                                                 and deployment_dtime_est <= '%s'
                                                 and (collection_dtime_est >= '%s' OR collection_dtime_est is null)
                                                 and (ow_suffix LIKE 'GW_' or ow_suffix LIKE 'CW_')"
