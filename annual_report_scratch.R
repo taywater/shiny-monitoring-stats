@@ -15,44 +15,44 @@ strong("Table 5-4: Public Systems with Post-Construction SRTs Performed"),
 strong("Table 5-5: Construction-Phase SRTs Performed on Public Systems"),
 	reactableOutput((ns("Construction-Phase SRTs Performed on Public Systems"))),
 	
-strong("Table 5-6: Public Systems with Construction-Phase SRTs Performed"),
-	reactableOutput((ns("Public Systems with Construction-Phase SRTs Performed"))),
+# strong("Table 5-6: Public Systems with Construction-Phase SRTs Performed"),
+# 	reactableOutput((ns("Public Systems with Construction-Phase SRTs Performed"))),
 	
-strong("Table 5-7: Public Systems with CETs Administered"),
-	reactableOutput((ns("Public Systems with CETs Administered"))),
+# strong("Table 5-7: Public Systems with CETs Administered"),
+# 	reactableOutput((ns("Public Systems with CETs Administered"))),
 	
-strong("Table 5-8: Public Systems with Infiltration Testing Administered"),
-	reactableOutput((ns("Public Systems with Infiltration Testing Administered"))),
+# strong("Table 5-8: Public Systems with Infiltration Testing Administered"),
+# 	reactableOutput((ns("Public Systems with Infiltration Testing Administered"))),
 	
-strong("Table 5-9: Public Systems with Inlet Leakage Tests Administered"),
-	reactableOutput((ns("Public Systems with Inlet Leakage Tests Administered"))),
+# strong("Table 5-9: Public Systems with Inlet Leakage Tests Administered"),
+# 	reactableOutput((ns("Public Systems with Inlet Leakage Tests Administered"))),
 	
-strong("Table 5-10: Inlet Conveyance Tests Performed on Public Systems"),
-	reactableOutput((ns("Inlet Conveyance Tests Performed on Public Systems"))),
+# strong("Table 5-10: Inlet Conveyance Tests Performed on Public Systems"),
+# 	reactableOutput((ns("Inlet Conveyance Tests Performed on Public Systems"))),
 	
-strong("Table 5-11: Groundwater Monitoring for Public GSI"),
-	reactableOutput((ns("Groundwater Monitoring for Public GSI"))),
+# strong("Table 5-11: Groundwater Monitoring for Public GSI"),
+# 	reactableOutput((ns("Groundwater Monitoring for Public GSI"))),
 	
-strong("Table 6-1: Summary of Post-Construction CWL Monitoring of Private Systems"),
-	reactableOutput((ns("Summary of Post-Construction CWL Monitoring of Private Systems"))),
+# strong("Table 6-1: Summary of Post-Construction CWL Monitoring of Private Systems"),
+# 	reactableOutput((ns("Summary of Post-Construction CWL Monitoring of Private Systems"))),
 	
-strong("Table 6-2: Post-Construction CWL Monitoring of Private Systems Listed by Type"),
-	reactableOutput((ns("Post-Construction CWL Monitoring of Private Systems Listed by Type"))),
+# strong("Table 6-2: Post-Construction CWL Monitoring of Private Systems Listed by Type"),
+# 	reactableOutput((ns("Post-Construction CWL Monitoring of Private Systems Listed by Type"))),
 	
-strong("Table 6-3: Post-Construction SRTs performed on Private Systems"),
-	reactableOutput((ns("Post-Construction SRTs performed on Private Systems"))),
+# strong("Table 6-3: Post-Construction SRTs performed on Private Systems"),
+# 	reactableOutput((ns("Post-Construction SRTs performed on Private Systems"))),
 	
-strong("Table 6-4: Private SMPs with Post-Construction SRTs Performed"),
-	reactableOutput((ns("Private SMPs with Post-Construction SRTs Performed"))),
+# strong("Table 6-4: Private SMPs with Post-Construction SRTs Performed"),
+# 	reactableOutput((ns("Private SMPs with Post-Construction SRTs Performed"))),
 	
-strong("Table 6-5: Private Systems with CETs Administered"),
-	reactableOutput((ns("Private Systems with CETs Administered"))),
+# strong("Table 6-5: Private Systems with CETs Administered"),
+# 	reactableOutput((ns("Private Systems with CETs Administered"))),
 	
-strong("Table 6-6: Private Systems with ICTs Administered"),
-	reactableOutput((ns("Private Systems with ICTs Administered"))),
+# strong("Table 6-6: Private Systems with ICTs Administered"),
+# 	reactableOutput((ns("Private Systems with ICTs Administered"))),
 	
-strong("Table 6-7: Private Systems with WWIs Administered"),
-	reactableOutput((ns("Private Systems with WWIs Administered")))
+# strong("Table 6-7: Private Systems with WWIs Administered"),
+# 	reactableOutput((ns("Private Systems with WWIs Administered")))
 
 #reactive FY start and END
 FYSTART_reactive <- reactive({
@@ -162,7 +162,7 @@ table_5_2 <- reactive({
 
 	todate_public_systems_monitored_bytype_prod <- dbGetQuery(prod, 
 	                                                          paste(sprintf(todate_public_systems_monitored_bytype,
-	                                                                        prod_end),
+	                                                                        FYEND_reactive()),
 	                                                                collapse=""))
 
 
@@ -216,8 +216,8 @@ table_5_3 <- reactive({
 
 	fy_public_postcon_srt_prod <-dbGetQuery(prod, 
 	                                        paste(sprintf(fy_public_postcon_srt, 
-	                                                      prod_start, 
-	                                                      prod_end),
+	                                                      FYSTART_reactive(), 
+	                                                      FYEND_reactive()),
 	                                              collapse=""))
 
 	#Post-construction public SRTsto date
@@ -229,7 +229,7 @@ table_5_3 <- reactive({
 
 	todate_public_postcon_srt_prod <- dbGetQuery(prod, 
 	                                             paste(sprintf(todate_public_postcon_srt,
-	                                                           prod_end),
+	                                                           FYEND_reactive()),
 	                                                   collapse=""))
 
 	#Assembling output table
@@ -260,8 +260,8 @@ table_5_4 <- reactive({
 
 	fy_public_postcon_srt_systems_prod <-dbGetQuery(prod, 
 	                                                paste(sprintf(fy_public_postcon_srt_systems, 
-	                                                              prod_start, 
-	                                                              prod_end),
+	                                                              FYSTART_reactive(), 
+	                                                              FYEND_reactive()),
 	                                                      collapse=""))
 
 	#Public Systems with Post-Construction SRTs Performed TO DATE
@@ -276,7 +276,7 @@ table_5_4 <- reactive({
 
 	todate_public_postcon_srt_systems_prod <-dbGetQuery(prod, 
 	                                                    paste(sprintf(todate_public_postcon_srt_systems, 
-	                                                                  prod_end),
+	                                                                  FYEND_reactive()),
 	                                                          collapse=""))
 
 	Assembling output table
@@ -286,7 +286,7 @@ table_5_4 <- reactive({
 	public_postcon_srt_bysystem$todate <- todate_public_postcon_srt_systems_prod$count
 
 	colnames(public_postcon_srt_bysystem)<- c("This Fiscal Year","To Date")
-	rownames(public_postcon_srt_bysystem)<- fy_public_postcon_srt_systems_prod$
+	rownames(public_postcon_srt_bysystem)<- fy_public_postcon_srt_systems_prod$asset_type
 
 	return(public_postcon_srt_bysystem)
 
@@ -295,72 +295,113 @@ table_5_4 <- reactive({
 
 table_5_5 <- reactive({
 
-	})
+	#Mid-construction SRTs performed on Public Systems this FY
+	fy_public_midcon_srt <- "select count(*), type
+	                            from fieldwork.viw_srt_full 
+	                            where test_date >= '%s'
+	                            and test_date <= '%s'
+	                            and phase = 'Construction'
+	                            and public = TRUE
+	                            group by type"
+	fy_public_midcon_srt_prod <- dbGetQuery(prod, 
+	                                        paste(sprintf(fy_public_midcon_srt, 
+	                                                      FYSTART_reactive(), 
+	                                                      FYEND_reactive()),
+	                                              collapse=""))
 
 
-table_5_6 <- reactive({
 
-	})
+	#Mid-construction SRTs performed on Public Systems to date
+	todate_public_midcon_srt <- "select count(*), type
+	                          from fieldwork.viw_srt_full 
+	                          where test_date <= '%s'
+	                          and phase = 'Construction'
+	                          and public = TRUE
+	                          group by type"
 
+	todate_public_midcon_srt_prod <- dbGetQuery(prod, 
+	                                            paste(sprintf(todate_public_midcon_srt, 
+	                                                          FYEND_reactive()),
+	                                                  collapse=""))
 
-table_5_7 <- reactive({
+	#Assembling output table
+	public_midcon_srt <- data.frame("fy" = rep(NA, nrow(fy_public_midcon_srt_prod)), 
+																	 "todate" = rep(NA, nrow(fy_public_midcon_srt_prod)))
+	public_midcon_srt$fy <- fy_public_midcon_srt_prod$count
+	public_midcon_srt$todate <- todate_public_midcon_srt_prod$count
 
-	})
+	colnames(public_midcon_srt)<- c("This Fiscal Year","To Date")
+	rownames(public_midcon_srt)<- fy_public_midcon_srt_prod$type
 
+	return(public_postcon_srt)
 
-table_5_8 <- reactive({
-
-	})
-
-
-table_5_9 <- reactive({
-
-	})
-
-
-table_5_10 <- reactive({
-
-	})
-
-
-table_5_11 <- reactive({
-
-	})
-
-
-table_6_1 <- reactive({
-
-	})
-
-
-table_6_2 <- reactive({
-
-	})
-
-
-table_6_3 <- reactive({
 
 	})
 
 
-table_6_4 <- reactive({
+# table_5_6 <- reactive({
 
-	})
-
-
-table_6_5 <- reactive({
-
-	})
+# 	})
 
 
-table_6_6 <- reactive({
+# table_5_7 <- reactive({
 
-	})
+# 	})
 
 
-table_6_7 <- reactive({
+# table_5_8 <- reactive({
+
+# 	})
+
+
+# table_5_9 <- reactive({
+
+# 	})
+
+
+# table_5_10 <- reactive({
+
+# 	})
+
+
+# table_5_11 <- reactive({
+
+# 	})
+
+
+# table_6_1 <- reactive({
+
+# 	})
+
+
+# table_6_2 <- reactive({
+
+# 	})
+
+
+# table_6_3 <- reactive({
+
+# 	})
+
+
+# table_6_4 <- reactive({
+
+# 	})
+
+
+# table_6_5 <- reactive({
+
+# 	})
+
+
+# table_6_6 <- reactive({
+
+# 	})
+
+
+# table_6_7 <- reactive({
 	
-	})
+# 	})
 	
 ########## UI output
 output$`Summary of Post-Construction CWL Monitoring of Public SMPs` <- renderReactable(reactable(table_5_1()), striped = TRUE, pagination = FALSE)
