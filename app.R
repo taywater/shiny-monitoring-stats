@@ -40,7 +40,7 @@ options(DT.options = list(pageLength = 15))
 poolConn <- dbPool(RPostgres::Postgres(),
                       host = "PWDMARSDBS1.pwd.phila.local",
                       port = 5434,
-                      dbname = "mars_fy25report",
+                      dbname = "mars_monica",
                       user = Sys.getenv("shiny_uid"),
                       password = Sys.getenv("shiny_pwd")
 )
