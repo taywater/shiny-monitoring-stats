@@ -5,25 +5,32 @@
 #0.0: load libraries --------------
 #shiny
 library(shiny)
+
 #pool for database connections
 library(pool)
-#odbc for database connections
-library(odbc)
+
 #tidyverse for data manipulations
 library(tidyverse)
+
 #shinythemes for colors
 library(shinythemes)
+
 #lubridate to work with dates
 library(lubridate)
+
 #shinyjs() to use easy java script functions
 library(shinyjs)
+
 #DT for datatables
 library(DT)
+
 #reactable for reactable tables
 library(reactable)
 
+#Forcats for factor manipulation
+library(forcats)
+
 #annual report stuff
-#library(reactablefmtr)
 library(shinydashboard)
 library(openxlsx)
 
@@ -54,8 +61,8 @@ jscode <- 'window.onbeforeunload = function() { return "Please use the button on
 
 #0.2 source scripts.  ----
 #each script contains a module, which includes UI and server code
-source("monitoring_stats.R")
-source("quarterly_report.R")
+# source("monitoring_stats.R")
+# source("quarterly_report.R")
 source("annual_report_new.R")
 
 
@@ -84,10 +91,10 @@ ui <- function(req){
     #must call useShinyjs() for shinyjs() functionality to work in app
     useShinyjs(),
     navbarPage("Monitoring Stats",  id = "inTabset", theme = shinytheme("cerulean"),
-      #Stats
-      m_statsUI("stats", current_fy = current_fy, years = years),
-      #Quarterly Report
-      q_reportUI("q_report", current_fy = current_fy, years = years),
+      # #Stats
+      # m_statsUI("stats", current_fy = current_fy, years = years),
+      # #Quarterly Report
+      # q_reportUI("q_report", current_fy = current_fy, years = years),
       #Annual Report
       a_reportUI("a_report", current_fy = current_fy, years = years)
       

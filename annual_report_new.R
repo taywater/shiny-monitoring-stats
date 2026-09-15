@@ -23,8 +23,59 @@ a_reportUI <- function(id, label = "a_report", current_fy, years){
              mainPanel(
                
                
-               strong("Table 5-1: Summary of Post-Construction CWL Monitoring of Public SMPs"),
-               reactableOutput(ns("Summary of Post-Construction CWL Monitoring of Public SMPs"))
+              strong("Table 5-1: Summary of Post-Construction CWL Monitoring of Public SMPs"),
+                reactableOutput(ns("Summary of Post-Construction CWL Monitoring of Public SMPs")),
+                
+              strong("Table 5-2: Post-Construction CWL Monitoring of Public SMPs Listed by Type"),
+                reactableOutput(ns("Post-Construction CWL Monitoring of Public SMPs Listed by Type")) #,
+                
+              # strong("Table 5-3: Post-Construction SRTs performed on Public Systems"),
+              #   reactableOutput(ns("Post-Construction SRTs performed on Public Systems")),
+                
+              # strong("Table 5-4: Public Systems with Post-Construction SRTs Performed"),
+              #   reactableOutput(ns("Public Systems with Post-Construction SRTs Performed")),
+                
+              # strong("Table 5-5: Construction-Phase SRTs Performed on Public Systems"),
+              #   reactableOutput(ns("Construction-Phase SRTs Performed on Public Systems")),
+                
+              # strong("Table 5-6: Public Systems with Construction-Phase SRTs Performed"),
+              #   reactableOutput(ns("Public Systems with Construction-Phase SRTs Performed")),
+                
+              # strong("Table 5-7: Public Systems with CETs Administered"),
+              #   reactableOutput(ns("Public Systems with CETs Administered")),
+                
+              # strong("Table 5-8: Public Systems with Infiltration Testing Administered"),
+              #   reactableOutput(ns("Public Systems with Infiltration Testing Administered")),
+                
+              # strong("Table 5-9: Public Systems with Inlet Leakage Tests Administered"),
+              #   reactableOutput(ns("Public Systems with Inlet Leakage Tests Administered")),
+                
+              # strong("Table 5-10: Inlet Conveyance Tests Performed on Public Systems"),
+              #   reactableOutput(ns("Inlet Conveyance Tests Performed on Public Systems")),
+                
+              # strong("Table 5-11: Groundwater Monitoring for Public GSI"),
+              #   reactableOutput(ns("Groundwater Monitoring for Public GSI")),
+                
+              # strong("Table 6-1: Summary of Post-Construction CWL Monitoring of Private Systems"),
+              #   reactableOutput(ns("Summary of Post-Construction CWL Monitoring of Private Systems")),
+                
+              # strong("Table 6-2: Post-Construction CWL Monitoring of Private Systems Listed by Type"),
+              #   reactableOutput(ns("Post-Construction CWL Monitoring of Private Systems Listed by Type")),
+                
+              # strong("Table 6-3: Post-Construction SRTs performed on Private Systems"),
+              #   reactableOutput(ns("Post-Construction SRTs performed on Private Systems")),
+                
+              # strong("Table 6-4: Private SMPs with Post-Construction SRTs Performed"),
+              #   reactableOutput(ns("Private SMPs with Post-Construction SRTs Performed")),
+                
+              # strong("Table 6-5: Private Systems with CETs Administered"),
+              #   reactableOutput(ns("Private Systems with CETs Administered")),
+                
+              # strong("Table 6-6: Private Systems with ICTs Administered"),
+              #   reactableOutput(ns("Private Systems with ICTs Administered")),
+                
+              # strong("Table 6-7: Private Systems with WWIs Administered"),
+              #   reactableOutput(ns("Private Systems with WWIs Administered"))
                
                
              )
@@ -138,13 +189,85 @@ a_reportServer <- function(id, parent_session, current_fy, poolConn){
           rownames(public_postcon_cwl)<-c("Sensors Deployed","Systems Monitored","Systems Newly Monitored")
           
           return(public_postcon_cwl)
-          
-          
+    
         })
+
+        table_5_2 <- reactive({
+          #Public systems monitored by type todate
+          todate_public_systems_monitored_bytype <- "select sfc.asset_type, count(distinct(d.smp_id)), d.public from
+                                                            fieldwork.viw_deployment_full_cwl d
+                                                            left join external.mat_assets sfc on d.smp_id = sfc.smp_id
+                                                            where sfc.component_id is null
+                                                            and d.smp_id is not null
+                                                            and d.deployment_dtime < '%s'
+                                                            and d.public = true
+                                                            group by sfc.asset_type, d.public"
+
+          #Query monitored systems and recode MARS name to GreenIT name
+          todate_public_systems_monitored_bytype_prod <- dbGetQuery(poolConn, 
+                                                                    paste(sprintf(todate_public_systems_monitored_bytype,
+                                                                                  FYEND_reactive()),
+                                                                          collapse="")) |>
+            mutate(asset_type = fct_recode(asset_type, "Infiltration/Storage Trench" = "Trench"))
+
+
+          #Public systems constructed by type to date
+          #cipit statuses indicating constructed systems are Jillian Simmons's best recommendation
+          todate_public_systems_constructed_bytype <- "select count(*), smp_smptype from external.tbl_smpbdv g 
+                                                        where g.smp_notbuiltretired is null 
+                                                        and (g.cipit_status = 'Closed' 
+                                                        or g.cipit_status = 'Construction-Substantially Complete' 
+                                                        or g.cipit_status = 'Construction-Contract Closed') 
+                                                        group by smp_smptype"
+
+          #Query constructed systems and recode GreenIT name to MARS name
+          todate_public_systems_constructed_bytype_prod <- dbGetQuery(poolConn,
+                                                                      todate_public_systems_constructed_bytype) |>
+            mutate(smp_smptype = fct_recode(smp_smptype, "Permeable Pavement" = "Pervious Paving")) 
+          
+
+          #Join and assemble table
+          todate_public_prod <- todate_public_systems_constructed_bytype_prod |> 
+            left_join(todate_public_systems_monitored_bytype_prod, 
+                      by=c("smp_smptype" = "asset_type"), 
+                      suffix = c(".constructed", ".monitored")) |>
+            transmute(`SMP Type` = smp_smptype, 
+                      Description = NA,
+                      `Monitored SMPs` = replace_na(count.monitored, 0),
+                      `Total Constructed Public SMPs` = count.constructed)
+
+          #Add descriptions
+          todate_public_prod$Description[todate_public_prod$`SMP Type` == "Infiltration/Storage Trench"] <- "Also listed as Trench"
+          todate_public_prod$Description[todate_public_prod$`SMP Type` == "Permeable Pavement"] <- "Also listed as Pervious Paving"
+
+          return(todate_public_prod)
+
+        })
+
+
+
+
         
         
-        #ractable table outputs
-        output$`Summary of Post-Construction CWL Monitoring of Public SMPs` <- renderReactable(reactable(table_5_1(), striped = TRUE))
+        #reactable table outputs
+        output$`Summary of Post-Construction CWL Monitoring of Public SMPs` <- renderReactable(reactable(table_5_1(), striped = TRUE, pagination = FALSE))
+        output$`Post-Construction CWL Monitoring of Public SMPs Listed by Type` <- renderReactable(reactable(table_5_2(), striped = TRUE, pagination = FALSE))
+        # output$`Post-Construction SRTs performed on Public Systems` <- renderReactable(reactable(table_5_3(), striped = TRUE, pagination = FALSE))
+        # output$`Public Systems with Post-Construction SRTs Performed` <- renderReactable(reactable(table_5_4(), striped = TRUE, pagination = FALSE))
+        # output$`Construction-Phase SRTs Performed on Public Systems` <- renderReactable(reactable(table_5_5(), striped = TRUE, pagination = FALSE))
+        # output$`Public Systems with Construction-Phase SRTs Performed` <- renderReactable(reactable(table_5_6(), striped = TRUE, pagination = FALSE))
+        # output$`Public Systems with CETs Administered` <- renderReactable(reactable(table_5_7(), striped = TRUE, pagination = FALSE))
+        # output$`Public Systems with Infiltration Testing Administered` <- renderReactable(reactable(table_5_8(), striped = TRUE, pagination = FALSE))
+        # output$`Public Systems with Inlet Leakage Tests Administered` <- renderReactable(reactable(table_5_9(), striped = TRUE, pagination = FALSE))
+        # output$`Inlet Conveyance Tests Performed on Public Systems` <- renderReactable(reactable(table_5_10(), striped = TRUE, pagination = FALSE))
+        # output$`Groundwater Monitoring for Public GSI` <- renderReactable(reactable(table_5_11(), striped = TRUE, pagination = FALSE))
+        # output$`Summary of Post-Construction CWL Monitoring of Private Systems` <- renderReactable(reactable(table_6_1(), striped = TRUE, pagination = FALSE))
+        # output$`Post-Construction CWL Monitoring of Private Systems Listed by Type` <- renderReactable(reactable(table_6_2(), striped = TRUE, pagination = FALSE))
+        # output$`Post-Construction SRTs performed on Private Systems` <- renderReactable(reactable(table_6_3(), striped = TRUE, pagination = FALSE))
+        # output$`Private SMPs with Post-Construction SRTs Performed` <- renderReactable(reactable(table_6_4(), striped = TRUE, pagination = FALSE))
+        # output$`Private Systems with CETs Administered` <- renderReactable(reactable(table_6_5(), striped = TRUE, pagination = FALSE))
+        # output$`Private Systems with ICTs Administered` <- renderReactable(reactable(table_6_6(), striped = TRUE, pagination = FALSE))
+        # output$`Private Systems with WWIs Administered` <- renderReactable(reactable(table_6_7(), striped = TRUE, pagination = FALSE))
         output$help_text <- renderText({
           paste("A Shiny App to Populate the Annual Report Stats" , 
                 "First Version Published on 08/05/2022 by Farshad Ebrahimi",
