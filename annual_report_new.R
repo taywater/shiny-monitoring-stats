@@ -33,10 +33,10 @@ a_reportUI <- function(id, label = "a_report", current_fy, years){
                 reactableOutput(ns("Post-Construction SRTs performed on Public Systems")),
                 
               strong("Table 5-4: Public Systems with Post-Construction SRTs Performed"),
-                reactableOutput(ns("Public Systems with Post-Construction SRTs Performed")) #,
+                reactableOutput(ns("Public Systems with Post-Construction SRTs Performed")),
                 
-              # strong("Table 5-5: Construction-Phase SRTs Performed on Public Systems"),
-              #   reactableOutput(ns("Construction-Phase SRTs Performed on Public Systems")),
+              strong("Table 5-5: Construction-Phase SRTs Performed on Public Systems"),
+                reactableOutput(ns("Construction-Phase SRTs Performed on Public Systems")) #,
                 
               # strong("Table 5-6: Public Systems with Construction-Phase SRTs Performed"),
               #   reactableOutput(ns("Public Systems with Construction-Phase SRTs Performed")),
@@ -334,14 +334,58 @@ a_reportServer <- function(id, parent_session, current_fy, poolConn){
         })
 
 
-        
+        table_5_5 <- reactive({
+
+          #Mid-construction SRTs performed on Public Systems this FY
+          fy_public_midcon_srt <- "select count(*), type
+                                      from fieldwork.viw_srt_full 
+                                      where test_date >= '%s'
+                                      and test_date <= '%s'
+                                      and phase = 'Construction'
+                                      and public = TRUE
+                                      group by type"
+          fy_public_midcon_srt_prod <- dbGetQuery(poolConn, 
+                                                  paste(sprintf(fy_public_midcon_srt, 
+                                                                FYSTART_reactive(), 
+                                                                FYEND_reactive()),
+                                                        collapse=""))
+
+
+
+          #Mid-construction SRTs performed on Public Systems to date
+          todate_public_midcon_srt <- "select count(*), type
+                                    from fieldwork.viw_srt_full 
+                                    where test_date <= '%s'
+                                    and phase = 'Construction'
+                                    and public = TRUE
+                                    group by type"
+
+          todate_public_midcon_srt_prod <- dbGetQuery(poolConn, 
+                                                      paste(sprintf(todate_public_midcon_srt, 
+                                                                    FYEND_reactive()),
+                                                            collapse=""))
+
+          #Assembling output table
+          public_midcon_srt <- left_join(todate_public_midcon_srt_prod,
+                                          fy_public_midcon_srt_prod,
+                                          by = "type",
+                                          suffix = c(".todate", ".fy"))
+
+          rownames(public_midcon_srt)<- public_midcon_srt$type
+          public_midcon_srt <- transmute(public_midcon_srt,
+                                       "This Fiscal Year" = replace_na(count.fy, 0),
+                                       "To Date" = count.todate)
+
+          return(public_midcon_srt)
+        })
+
         
         #reactable table outputs
         output$`Summary of Post-Construction CWL Monitoring of Public SMPs` <- renderReactable(reactable(table_5_1(), striped = TRUE, pagination = FALSE))
         output$`Post-Construction CWL Monitoring of Public SMPs Listed by Type` <- renderReactable(reactable(table_5_2(), striped = TRUE, pagination = FALSE))
         output$`Post-Construction SRTs performed on Public Systems` <- renderReactable(reactable(table_5_3(), striped = TRUE, pagination = FALSE))
         output$`Public Systems with Post-Construction SRTs Performed` <- renderReactable(reactable(table_5_4(), striped = TRUE, pagination = FALSE))
-        # output$`Construction-Phase SRTs Performed on Public Systems` <- renderReactable(reactable(table_5_5(), striped = TRUE, pagination = FALSE))
+        output$`Construction-Phase SRTs Performed on Public Systems` <- renderReactable(reactable(table_5_5(), striped = TRUE, pagination = FALSE))
         # output$`Public Systems with Construction-Phase SRTs Performed` <- renderReactable(reactable(table_5_6(), striped = TRUE, pagination = FALSE))
         # output$`Public Systems with CETs Administered` <- renderReactable(reactable(table_5_7(), striped = TRUE, pagination = FALSE))
         # output$`Public Systems with Infiltration Testing Administered` <- renderReactable(reactable(table_5_8(), striped = TRUE, pagination = FALSE))
